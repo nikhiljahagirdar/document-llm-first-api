@@ -1,0 +1,10 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:10:13 GMT",
+  "server": "uvicorn",
+  "content-length": "502",
+  "content-type": "application/json",
+  "vary": "Accept-Encoding",
+  "content-encoding": "gzip"
+}
+Body: {"tenant_id":"04c2ffd1-a2dc-4b89-a1ad-4c48849122aa","name":"Demo Tenant","org_name":"Demo Corporation","type":"enterprise","metrics":{"total_documents":22,"total_users":5,"processed_documents":17,"failed_documents":1},"recent_documents":[{"id":"a613f44d-d1c8-49bf-aff3-8a7ea6a54042","filename":"test_upload_936b_1685832458_Halftoneissues.jpg.7143a8f8bb8ab5bf2b33d569192ba512.jpg","status":"failed","created_on":"2026-04-28T19:09:51.127348"},{"id":"cb65af23-dbca-4f6f-a850-6406eb74088c","filename":"test_200b6486.pdf","status":"extracting","created_on":"2026-04-28T19:09:48.665210"},{"id":"d5bea614-400a-4421-b9c3-ef0ff627eca0","filename":"test_bd10dd1e.pdf","status":"processed","created_on":"2026-04-28T19:09:00.163650"},{"id":"70f208ba-4971-4d4e-9fd6-6fe1464f3487","filename":"test_report_6fd20c.txt","status":"processed","created_on":"2026-04-28T19:08:57.242870"},{"id":"7ab93b05-1052-47c7-8971-6e5d1ba8a6f0","filename":"e2e_test_8b7faa.pdf","status":"processed","created_on":"2026-04-28T19:08:18.235788"}]}

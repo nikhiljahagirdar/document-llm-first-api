@@ -1,0 +1,10 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:10:13 GMT",
+  "server": "uvicorn",
+  "content-length": "383",
+  "content-type": "application/json",
+  "vary": "Accept-Encoding",
+  "content-encoding": "gzip"
+}
+Body: [{"name":"Free","description":null,"price":0.0,"currency":"USD","limits":{"ai_limit":1000000,"doc_limit":5,"ocr_pages":10000,"total_tokens":1000000,"storage_limit_mb":10240},"is_active":true,"plan_id":"6e289ce8-5ce8-46a6-ad08-d246cc1048c9","stripe_monthly_price_id":null,"stripe_yearly_price_id":null,"paypal_plan_id":null},{"name":"Pro","description":null,"price":29.0,"currency":"USD","limits":{"ai_limit":1000000,"doc_limit":100,"ocr_pages":10000,"total_tokens":1000000,"storage_limit_mb":10240},"is_active":true,"plan_id":"122da5fd-46b2-47ef-9cf5-bb8f03c12cfa","stripe_monthly_price_id":null,"stripe_yearly_price_id":null,"paypal_plan_id":null},{"name":"Test Pro Plan","description":null,"price":99.0,"currency":"USD","limits":{"ai_limit":1000000,"ocr_pages":10000,"ai_credits":1000,"storage_mb":500,"total_tokens":1000000,"storage_limit_mb":10240},"is_active":true,"plan_id":"afafa2c2-9560-4f31-94f6-88cae6daa3c3","stripe_monthly_price_id":null,"stripe_yearly_price_id":null,"paypal_plan_id":null},{"name":"Enterprise","description":null,"price":199.0,"currency":"USD","limits":{"ai_limit":1000000,"doc_limit":-1,"ocr_pages":10000,"total_tokens":1000000,"storage_limit_mb":10240},"is_active":true,"plan_id":"c6bdd6da-12e8-43d2-bc65-47958bdbb230","stripe_monthly_price_id":null,"stripe_yearly_price_id":null,"paypal_plan_id":null}]

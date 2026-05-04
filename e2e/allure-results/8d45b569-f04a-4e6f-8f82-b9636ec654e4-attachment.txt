@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:10:14 GMT",
+  "server": "uvicorn",
+  "content-length": "593",
+  "content-type": "application/json"
+}
+Body: {"template_id":"b76bf2dd-547f-466b-911d-20d6596cd876","tenant_id":"04c2ffd1-a2dc-4b89-a1ad-4c48849122aa","user_id":"d5feab67-20bd-4f5a-9fb4-9152b42e3fdf","industry_id":null,"category_id":null,"subcategory_id":null,"template_name":"Dynamic Test Template","description":null,"template_schema":null,"document_type":null,"html_content":null,"category":"N/A","subcategory":"N/A","title":null,"subtitle":null,"footer":null,"header_image":"https://nikhiljag-bucket.s3.ap-south-1.amazonaws.com/templates/4acb6905-ae24-41b2-929e-6d6348bc6327_Dynamic_Test_Template.docx","config":null,"is_public":false}

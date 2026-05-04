@@ -1,0 +1,54 @@
+[2026-05-03 18:20:39] DEBUG: Starting background processing for document 77c1667c-71ef-4181-8a86-0363befae5fa
+[2026-05-03 18:20:39] DEBUG: Calling process_document for 77c1667c-71ef-4181-8a86-0363befae5fa
+[2026-05-03 18:20:44] DEBUG: Extraction complete for 77c1667c-71ef-4181-8a86-0363befae5fa. Source: pymupdf-native
+[2026-05-03 18:26:28] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 18:26:28] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 18:26:28] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: error
+[2026-05-03 18:26:28] DEBUG: Extraction failed for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 18:51:09] DEBUG: Starting background processing for document 488cb386-3923-4164-a0a3-ad6f350475c4
+[2026-05-03 18:51:09] DEBUG: Calling process_document for 488cb386-3923-4164-a0a3-ad6f350475c4
+[2026-05-03 18:51:17] DEBUG: Extraction complete for 488cb386-3923-4164-a0a3-ad6f350475c4. Source: docling-docx
+[2026-05-03 19:27:02] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:27:02] INFO: Local file missing at C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv, attempting download from S3
+[2026-05-03 19:27:04] INFO: Successfully downloaded tenants.csv to C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv
+[2026-05-03 19:27:04] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:27:08] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: error
+[2026-05-03 19:27:08] DEBUG: Extraction failed for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:34:22] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:34:22] INFO: Local file missing at C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv, attempting download from S3
+[2026-05-03 19:34:23] INFO: Successfully downloaded tenants.csv to C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv
+[2026-05-03 19:34:23] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:34:25] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: error
+[2026-05-03 19:34:25] DEBUG: Extraction failed for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:50:40] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:50:40] INFO: Local file missing at C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv, attempting download from S3
+[2026-05-03 19:50:41] INFO: Successfully downloaded tenants.csv to C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv
+[2026-05-03 19:50:41] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 19:50:43] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: error
+[2026-05-03 19:50:43] DEBUG: Extraction failed for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 20:24:14] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 20:24:14] INFO: Local file missing at C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv, attempting download from S3
+[2026-05-03 20:24:15] INFO: Successfully downloaded tenants.csv to C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv
+[2026-05-03 20:24:15] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 20:24:16] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: fallback-csv
+[2026-05-03 20:24:16] DEBUG: Extraction failed for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 20:26:53] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 20:26:53] INFO: Local file missing at C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv, attempting download from S3
+[2026-05-03 20:26:54] INFO: Successfully downloaded tenants.csv to C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv
+[2026-05-03 20:26:54] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 20:26:55] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: fallback-csv
+[2026-05-03 20:26:55] DEBUG: Extraction failed for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 21:25:57] DEBUG: Starting background processing for document 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 21:25:57] INFO: Local file missing at C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv, attempting download from S3
+[2026-05-03 21:25:58] INFO: Successfully downloaded tenants.csv to C:\selling-point\document\app\backend\uploads\temp-9417b2e0-10cc-4624-a333-0b0191b56dc3-9249655c-6975-4520-a854-92dc1d66cbb6\9249655c-6975-4520-a854-92dc1d66cbb6.csv
+[2026-05-03 21:25:58] DEBUG: Calling process_document for 9249655c-6975-4520-a854-92dc1d66cbb6
+[2026-05-03 21:26:00] DEBUG: Extraction complete for 9249655c-6975-4520-a854-92dc1d66cbb6. Source: fallback-csv
+[2026-05-03 21:27:02] DEBUG: Starting background processing for document 1e767ab6-542f-4650-9756-da12e3094312
+[2026-05-03 21:27:02] DEBUG: Calling process_document for 1e767ab6-542f-4650-9756-da12e3094312
+[2026-05-03 21:27:03] DEBUG: Extraction complete for 1e767ab6-542f-4650-9756-da12e3094312. Source: fallback-csv
+[2026-05-04 16:08:21] DEBUG: Starting background processing for document d145b4b6-f234-43cd-923c-070555bc3d95
+[2026-05-04 16:08:21] DEBUG: Calling process_document for d145b4b6-f234-43cd-923c-070555bc3d95
+[2026-05-04 16:08:27] DEBUG: Extraction complete for d145b4b6-f234-43cd-923c-070555bc3d95. Source: fallback-excel
+[2026-05-04 16:08:27] DEBUG: Extraction failed for d145b4b6-f234-43cd-923c-070555bc3d95
+[2026-05-04 17:50:01] DEBUG: Starting background processing for document d145b4b6-f234-43cd-923c-070555bc3d95
+[2026-05-04 17:50:01] ERROR: d145b4b6-f234-43cd-923c-070555bc3d95 failed: LIMIT REACHED: You have used 100% of your OCR Usage (Pages) allowance. Operation cancelled.

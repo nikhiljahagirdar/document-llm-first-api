@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:10:15 GMT",
+  "server": "uvicorn",
+  "content-length": "817",
+  "content-type": "application/json"
+}
+Body: [{"name":"viewer","permissions":{},"role_id":"22dd1398-2b0e-4b71-8957-aa4751b19f5d","tenant_id":null,"is_active":true,"created_on":"2026-04-23T21:48:08.258972","updated_on":"2026-04-23T17:48:08.257253"},{"name":"user","permissions":{},"role_id":"2dfaca69-5c93-4d57-b8ef-b67ecea3eacc","tenant_id":null,"is_active":true,"created_on":"2026-04-23T21:48:08.252730","updated_on":"2026-04-23T17:48:08.251141"},{"name":"tenant_admin","permissions":{},"role_id":"0a4b7419-ad62-4e5f-91b4-a6a47e212f0b","tenant_id":null,"is_active":true,"created_on":"2026-04-23T21:48:08.236313","updated_on":"2026-04-23T17:48:08.234412"},{"name":"superadmin","permissions":{},"role_id":"f6eb5539-4651-483d-8248-8a3b767ffb8e","tenant_id":null,"is_active":true,"created_on":"2026-04-23T21:48:08.200968","updated_on":"2026-04-23T17:48:08.200166"}]

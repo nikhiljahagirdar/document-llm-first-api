@@ -1,0 +1,4 @@
+ERROR: Failed to persist notification for user f08e0f7c-9a17-4053-925e-ba6a7465602e: insert or update on table "notifications" violates foreign key constraint "notifications_user_id_fkey"
+DETAIL:  Key (user_id)=(f08e0f7c-9a17-4053-925e-ba6a7465602e) is not present in table "users".
+ERROR: Failed to persist notification for user f08e0f7c-9a17-4053-925e-ba6a7465602e: insert or update on table "notifications" violates foreign key constraint "notifications_user_id_fkey"
+DETAIL:  Key (user_id)=(f08e0f7c-9a17-4053-925e-ba6a7465602e) is not present in table "users".

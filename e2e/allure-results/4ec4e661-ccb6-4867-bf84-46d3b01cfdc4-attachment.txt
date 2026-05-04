@@ -1,0 +1,2 @@
+DEBUG: Failed to send status notification: the pool 'pool-1' is not open yet
+DEBUG: Failed to send status notification: the pool 'pool-1' is not open yet

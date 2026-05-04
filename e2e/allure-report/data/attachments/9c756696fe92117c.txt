@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:10:13 GMT",
+  "server": "uvicorn",
+  "content-length": "21",
+  "content-type": "application/json"
+}
+Body: {"status":"received"}

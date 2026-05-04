@@ -1,0 +1,8 @@
+Status: 422
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:09:50 GMT",
+  "server": "uvicorn",
+  "content-length": "166",
+  "content-type": "application/json"
+}
+Body: {"detail":[{"type":"missing","loc":["body","file_content"],"msg":"Field required","input":{"text":"This is a contract for a financial software service agreement."}}]}

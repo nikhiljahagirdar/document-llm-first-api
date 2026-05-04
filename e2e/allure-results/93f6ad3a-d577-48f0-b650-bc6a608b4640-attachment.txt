@@ -1,0 +1,2 @@
+Document 0af31f02-5c2f-4cf9-89ac-1cf2fe02779b reached final status: failed
+History of statuses seen: {'failed', 'extracting'}

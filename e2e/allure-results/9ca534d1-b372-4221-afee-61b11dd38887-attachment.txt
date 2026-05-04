@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Thu, 30 Apr 2026 12:52:16 GMT",
+  "server": "uvicorn",
+  "content-length": "320",
+  "content-type": "application/json"
+}
+Body: {"notification_id":"e107486f-621c-4d0b-9b52-c9c50fa67c2c","user_id":"d5feab67-20bd-4f5a-9fb4-9152b42e3fdf","title":"Test Notification","message":"This is a test notification from the API.","type":"info","is_read":false,"is_active":true,"created_on":"2026-04-30T16:52:17.445363","updated_on":"2026-04-30T16:52:17.445363"}

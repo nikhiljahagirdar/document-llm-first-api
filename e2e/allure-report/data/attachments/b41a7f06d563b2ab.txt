@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:09:51 GMT",
+  "server": "uvicorn",
+  "content-length": "456",
+  "content-type": "application/json"
+}
+Body: {"response":"*   This document is an Aadhaar card for Nikhil Krishna Jahagirdar, generated on 20/03/2017.\n*   It includes the recipient's address in Bengaluru, Karnataka (560059), their phone number (9900579940), and their Aadhaar number (9868 7029 5438).\n*   The document states that Aadhaar is a proof of identity (not citizenship), is valid throughout India, and will be helpful for accessing government and non-government services.","suggestions":[]}

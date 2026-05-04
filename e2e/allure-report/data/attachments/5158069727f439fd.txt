@@ -1,0 +1,8 @@
+Status: 422
+Headers: {
+  "date": "Thu, 30 Apr 2026 12:52:13 GMT",
+  "server": "uvicorn",
+  "content-length": "332",
+  "content-type": "application/json"
+}
+Body: {"detail":[{"type":"missing","loc":["body","plan_id"],"msg":"Field required","input":{}},{"type":"missing","loc":["body","provider"],"msg":"Field required","input":{}},{"type":"missing","loc":["body","success_url"],"msg":"Field required","input":{}},{"type":"missing","loc":["body","cancel_url"],"msg":"Field required","input":{}}]}

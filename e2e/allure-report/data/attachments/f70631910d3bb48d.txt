@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Thu, 30 Apr 2026 12:51:34 GMT",
+  "server": "uvicorn",
+  "content-length": "334",
+  "content-type": "application/json"
+}
+Body: {"email":"admin@demo.com","first_name":"Tenant","last_name":"Admin","provider":"local","user_id":"d5feab67-20bd-4f5a-9fb4-9152b42e3fdf","tenant_id":"04c2ffd1-a2dc-4b89-a1ad-4c48849122aa","role_id":"0a4b7419-ad62-4e5f-91b4-a6a47e212f0b","role":null,"role_name":"tenant_admin","created_on":"2026-04-23T17:48:08.788973","is_active":true}

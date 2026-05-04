@@ -1,0 +1,8 @@
+Status: 422
+Headers: {
+  "date": "Thu, 30 Apr 2026 12:52:14 GMT",
+  "server": "uvicorn",
+  "content-length": "174",
+  "content-type": "application/json"
+}
+Body: {"detail":[{"type":"missing","loc":["query","metric"],"msg":"Field required","input":null},{"type":"missing","loc":["query","quantity"],"msg":"Field required","input":null}]}

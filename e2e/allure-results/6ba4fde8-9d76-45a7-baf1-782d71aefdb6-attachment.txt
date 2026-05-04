@@ -1,0 +1,8 @@
+Status: 404
+Headers: {
+  "date": "Thu, 30 Apr 2026 12:51:35 GMT",
+  "server": "uvicorn",
+  "content-length": "77",
+  "content-type": "application/json"
+}
+Body: {"detail":"No document templates available. Please create a template first."}

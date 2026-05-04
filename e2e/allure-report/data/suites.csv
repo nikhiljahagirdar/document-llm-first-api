@@ -1,0 +1,521 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","13","test_endpoint_smoke[GET-/api/logs/usage/summary]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","14","test_endpoint_smoke[GET-/api/users/]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","17","test_detect_industry","e2e","2026-04-30","failed","2026-04-30","","test_api_v3_comprehensive","",""
+"Retrieve an aggregated summary of usage for the current billing period.
+Superadmins see global totals. Tenant admins see organization totals.","35","GET /api/logs/usage/summary","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","5","test_endpoint_smoke[GET-/api/notifications/ws/{user_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[POST-/api/notifications/read-all]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve a specific industry by ID.","35","GET /api/industries/{industry_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","8","test_openapi_endpoints[/api/industries/{industry_id}/templates-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","210","test_endpoint_smoke[GET-/api/industries]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[POST-/api/documents/manual]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve payment and invoice history for the current tenant.","40","GET /api/billing/invoices","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","27","test_health_check","e2e","2026-04-30","passed","2026-04-30","","test_playwright_api","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[GET-/api/users/me]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[POST-/api/metering/record]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"List all categories with pagination and search.","194","GET /api/categories","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[PATCH-/api/industries/{industry_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","9","test_openapi_endpoints[/api/billing/subscription-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Returns the Google OAuth2 authorization URL to allow the user to grant Drive access.","40","GET /api/integrations/google/auth-url","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","14","test_endpoint_smoke[GET-/api/notifications/]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[GET-/api/categories/{category_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"No description provided","14","PATCH /api/users/me","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Update industry details.","20","PATCH /api/industries/{industry_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"No description provided","1342","POST /api/templates/","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","7","test_openapi_endpoints[/api/metering/record-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Delete a subcategory.","69","DELETE /api/subcategories/{subcategory_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/integrations/google/status]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","13","test_endpoint_smoke[POST-/api/llm/detect-industry]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","14","test_endpoint_smoke[GET-/api/reports/{report_id}/versions]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","16","test_openapi_endpoints[/api/reports-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[GET-/]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve templates owned by the current tenant or public templates.","39","GET /api/templates/my/","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/subcategories/{subcategory_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Update subcategory details.","67","PATCH /api/subcategories/{subcategory_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/tenants/{tenant_id}/settings]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","12","test_openapi_endpoints[/api/roles-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","7","test_openapi_endpoints[/-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","5","test_endpoint_smoke[POST-/api/tenants/register]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","7","test_openapi_endpoints[/api/templates/ai-builder-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/users/register]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","13","test_openapi_endpoints[/api/roles/{role_id}-patch]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Create a new custom role specific to the current tenant.
+Only accessible to tenant admins (e.g., enterprise_tenant).","48","POST /api/roles","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/roles]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","7","test_openapi_endpoints[/api/templates/public/-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"No description provided","23","GET /api/billing/subscription","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"No description provided","38","GET /api/templates/{template_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[POST-/api/admin/tenants/{tenant_id}/suspend]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[POST-/api/plans]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Create a new document subcategory within a category.","30","POST /api/subcategories","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"**AI Multimodal Analysis**
+
+Performs deep analysis on a combination of document text and multiple associated images.
+Provides cross-modal insights and summaries.","83","POST /api/llm/analyze-multimodal","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Mark all notifications as read for the current user.","73","POST /api/notifications/read-all","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Connect to this WebSocket to receive real-time document processing updates.","33","GET /api/notifications/ws/{user_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","10","test_health_check","e2e","2026-04-30","passed","2026-04-30","","test_api_v3_comprehensive","",""
+"","183","test_openapi_endpoints[/api/templates/-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Mark a specific notification as read.","52","POST /api/notifications/{notification_id}/read","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","13","test_endpoint_smoke[POST-/api/llm/generate]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Update the configuration settings for a specific tenant using raw SQL.","18","PUT /api/tenants/{tenant_id}/settings","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","14","test_openapi_endpoints[/api/templates/my/-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"No description provided","29","GET /api/admin/billing/failed","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","8","test_openapi_endpoints[/api/industries/{industry_id}-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","12","test_openapi_endpoints[/api/roles/{role_id}-delete]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[GET-/api/templates/{template_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[POST-/api/llm/rag-agent]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"List all subcategories with pagination and search.","52","GET /api/subcategories","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"No description provided","15","POST /api/billing/webhooks/paypal","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Create a new folder.","62","POST /api/folders","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/integrations/google/callback]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve reports generated for the current tenant.","37","GET /api/reports","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[POST-/api/llm/analyze-multimodal]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","16","test_endpoint_smoke[GET-/api/reports]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","12","test_endpoint_smoke[POST-/api/documents/from-template]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","43","test_openapi_endpoints[/api/categories-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","411","test_document_full_flow","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"List folders for the current tenant.","89","GET /api/folders","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"List all available subscription plans.","21","GET /api/plans","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Manually create a new audit log entry.","32","POST /api/logs/audit","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","8","test_openapi_endpoints[/api/logs/audit-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Delete a notification.","32","DELETE /api/notifications/{notification_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[GET-/api/folders/{folder_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","17","test_endpoint_smoke[GET-/api/logs/audit]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[PATCH-/api/subcategories/{subcategory_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve the configuration settings for a specific tenant using raw SQL.","28","GET /api/tenants/{tenant_id}/settings","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[POST-/api/folders]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","12","test_openapi_endpoints[/api/billing/checkout-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","17","test_endpoint_smoke[GET-/api/metering/summary]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[PUT-/api/tenants/{tenant_id}/settings]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/billing/history]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","16","test_openapi_endpoints[/api/logs/usage/summary-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","11","test_openapi_endpoints[/api/industries-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"No description provided","21","GET /api/users/","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","7","test_openapi_endpoints[/api/users/me-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Retrieve a specific report.","76","GET /api/reports/{report_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","18","test_endpoint_smoke[GET-/api/metering/logs]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","17","test_endpoint_smoke[GET-/api/folders]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","12","test_endpoint_smoke[POST-/api/logs/audit]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"No description provided","54","GET /","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Update an existing subscription plan.","22","PUT /api/plans/{plan_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[PUT-/api/plans/{plan_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[GET-/api/roles]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/reports/{report_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","12","test_openapi_endpoints[/api/folders/{folder_id}-delete]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","7","test_openapi_endpoints[/api/llm/chat/summarize-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Retrieve a specific folder by ID.","33","GET /api/folders/{folder_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[POST-/api/billing/checkout]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[POST-/api/logs/usage]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/llm/chat/document]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[GET-/api/industries/{industry_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","6","test_endpoint_smoke[POST-/api/billing/webhooks/stripe]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","7","test_openapi_endpoints[/api/industries/{industry_id}-patch]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Checks if the user has an active Google Drive authorization.","41","GET /api/integrations/google/status","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","14","test_endpoint_smoke[GET-/api/tenants/dashboard]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[DELETE-/api/templates/{template_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve document templates associated with a specific industry.","22","GET /api/industries/{industry_id}/templates","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Get a breakdown of current usage vs plan limits. 
+Superadmins see global totals. Tenant admins see organization-wide totals.","35","GET /api/metering/summary","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","8","test_openapi_endpoints[/api/plans-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","11","test_openapi_endpoints[/api/documents/from-template-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"**General Knowledge Agent (Tenant-wide RAG)**
+
+Queries across ALL documents belonging to the current tenant.
+Identifies relevant information from multiple sources to provide a unified answer
+and **intelligent follow-up suggestions**.","19","POST /api/llm/rag-agent","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[GET-/api/industries/{industry_id}/templates]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"No description provided","19","POST /api/users/login","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","6","test_endpoint_smoke[POST-/api/industries]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","14","test_openapi_endpoints[/api/subcategories-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Retrieve a specific subcategory.","59","GET /api/subcategories/{subcategory_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[DELETE-/api/roles/{role_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","4","test_openapi_endpoints[/api/users/roles-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/templates/ai-builder]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Register a new SaaS tenant on the platform using raw SQL.","31","POST /api/tenants/register","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","16","test_openapi_endpoints[/api/metering/summary-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"**Get Document Details**
+
+Retrieves full metadata, current status, and all versions/images associated with a specific document.","25","GET /api/documents/{document_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"**Focused Document Chat (RAG)**
+
+Allows a conversation focused on a single specific document.
+Uses semantic search (RAG) to find relevant sections and provides an answer
+along with **intelligent follow-up suggestions**.","36712","POST /api/llm/chat/document","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","10","test_openapi_endpoints[/api/subcategories-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Retrieve metered usage logs with search and pagination.
+Admins see entire tenant usage. Users see their own.","37","GET /api/logs/usage","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"**Create Manual Document**
+
+Creates a new document entry based on raw text or HTML provided by the user. 
+Useful for creating notes or reports directly within the platform.","23","POST /api/documents/manual","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"No description provided","16","POST /api/users/register","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","10","test_openapi_endpoints[/api/logs/usage-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","13","test_endpoint_smoke[POST-/api/documents/{document_id}/reprocess]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Update folder details.","69","PATCH /api/folders/{folder_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","13","test_endpoint_smoke[PATCH-/api/documents/{document_id}/content]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Lists the user's Google Docs and PDFs from Drive.","39","GET /api/integrations/google/files","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","10","test_openapi_endpoints[/api/industries-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","12","test_endpoint_smoke[POST-/api/documents/import/google]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","6","test_openapi_endpoints[/api/users/token-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"No description provided","25","POST /api/admin/tenants/{tenant_id}/suspend","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"No description provided","13","POST /api/billing/webhooks/stripe","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","16","test_openapi_endpoints[/api/folders/{folder_id}-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","36","test_document_db_flow","app.tests","2026-04-28","passed","2026-04-28","","test_document_db_service","",""
+"","15","test_openapi_endpoints[/api/billing/invoices-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Get raw historical usage logs.","33","GET /api/metering/logs","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","13","test_openapi_endpoints[/api/tenants/dashboard-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"**Create Document from Template**
+
+Generates a new document using a pre-defined system or tenant template.
+Populates placeholders with provided `template_data`.","297","POST /api/documents/from-template","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"**AI Document Generation**
+
+Generates a new, professional document based on a template and user-provided context.
+- If `template_id` is provided, it uses that specific template.
+- Otherwise, it searches for a suitable template based on industry/category criteria.
+- Generates a `.docx` file, uploads it to S3, and records it as a `GeneratedReport`.","301","POST /api/llm/generate","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","2730","test_rag_agent","e2e","2026-04-30","passed","2026-04-30","","test_api_v3_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","44","test_endpoint_smoke[GET-/api/categories]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","9","test_openapi_endpoints[/api/categories-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Create a new subscription plan.","20","POST /api/plans","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/subcategories]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"**AI Summarization**
+
+Summarizes a block of text or document content into a concise, professional executive summary.","93","POST /api/llm/chat/summarize","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[GET-/api/templates/public/]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","10","test_openapi_endpoints[/api/llm/analyze-multimodal-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Delete a folder. Folder must be empty.","38","DELETE /api/folders/{folder_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[PATCH-/api/users/me]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[POST-/api/notifications/test-notify]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"**Get Document Content (Paginated)**
+
+Retrieves the extracted text, HTML preview, and structured rich content for a document.
+- Supports **Physical Page-based Pagination** (for PDFs/Office docs).
+- If physical pages are not detected, it falls back to character-range pagination.","199","GET /api/documents/{document_id}/content","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"**Proactive Document Insights**
+
+Analyzes the content of a specific document and generates 3-4 proactive suggestions,
+risk warnings, or follow-up questions to help the user understand the document better.","241","GET /api/llm/documents/{document_id}/suggestions","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","9","test_openapi_endpoints[/api/admin/tenants-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","254","test_openapi_endpoints[/api/users/register-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","16433","test_document_full_lifecycle","e2e","2026-04-30","passed","2026-04-30","","test_api_v3_comprehensive","",""
+"**List Documents**
+
+Returns a paginated list of documents accessible to the user.
+- Support for full-text search on filenames.
+- Filtering by `folder_id`.
+- Automatic tenant isolation.","103","GET /api/documents","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/admin/tenants]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[POST-/api/documents/upload]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[GET-/api/llm/documents/{document_id}/suggestions]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","13","test_openapi_endpoints[/api/documents-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","20","test_openapi_endpoints[/api/llm/generate-post]","e2e","2026-04-30","failed","2026-04-30","","test_all_openapi","",""
+"","12","test_openapi_endpoints[/api/reports/analyze-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","66","test_report_generation_flow","e2e","2026-04-30","failed","2026-04-30","","test_api_v3_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/subcategories]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/plans]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","9","test_endpoint_smoke[PATCH-/api/roles/{role_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[PATCH-/api/templates/{template_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"No description provided","29","GET /api/admin/tenants","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","546","test_all_services","app.tests","2026-04-28","passed","2026-04-28","","test_all_db_services","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","6","test_endpoint_smoke[POST-/api/users/login]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"**Import Google Doc**
+
+Downloads a Google Doc as a PDF and processes it.
+If the document is private, it uses the user's authorized Google Drive credentials.","159","POST /api/documents/import/google","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Retrieve comprehensive statistics for a tenant's dashboard using raw SQL.","28","GET /api/tenants/dashboard","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Retrieve security and activity audit logs for the current tenant with search and pagination.","24","GET /api/logs/audit","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/billing/subscription]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve all roles applicable to the current tenant with pagination and search.
+Includes both system-wide roles (tenant_id IS NULL) and tenant-specific custom roles.","57","GET /api/roles","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[POST-/api/reports/analyze]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","14","test_endpoint_smoke[GET-/api/documents]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[GET-/api/admin/billing/failed]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Update category details.","76","PATCH /api/categories/{category_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","12","test_openapi_endpoints[/api/notifications/read-all-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[DELETE-/api/industries/{industry_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","38","test_industries_list","e2e","2026-04-30","passed","2026-04-30","","test_api_v3_comprehensive","",""
+"Exchanges the authorization code for tokens and stores them securely.","41","POST /api/integrations/google/callback","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","9","test_openapi_endpoints[/api/industries/{industry_id}-delete]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"**AI Industry & Category Detection**
+
+Analyzes document text and automatically maps it to the best matching Industry, Category, and Subcategory
+based on the tenant's configured hierarchy. Returns UUIDs and confidence levels.","142","POST /api/llm/detect-industry","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[GET-/api/templates/my/]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","15","test_endpoint_smoke[PATCH-/api/folders/{folder_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[PATCH-/api/categories/{category_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","10","test_openapi_endpoints[/api/admin/metrics-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Retrieve all public document generation templates with search and pagination.","22","GET /api/templates/public/","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/billing/invoices]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","760","test_endpoint_smoke[POST-/api/templates/]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","12","test_openapi_endpoints[/api/folders-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","16","test_endpoint_smoke[GET-/api/logs/usage]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"List all supported industries and their associated categories with optional search.","28","GET /api/industries","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","26","test_openapi_endpoints[/api/llm/detect-industry-post]","e2e","2026-04-30","failed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[GET-/api/integrations/google/auth-url]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[DELETE-/api/subcategories/{subcategory_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[POST-/api/notifications/{notification_id}/read]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","13","test_openapi_endpoints[/api/folders-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[DELETE-/api/plans/{plan_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"No description provided","17","POST /api/billing/checkout","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Delete a category.","35","DELETE /api/categories/{category_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[DELETE-/api/categories/{category_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve all versions of a report.","51","GET /api/reports/{report_id}/versions","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"No description provided","20","DELETE /api/templates/{template_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Deactivate a subscription plan (sets is_active to FALSE).","32","DELETE /api/plans/{plan_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Synchronizes Google Drive files with the platform.
+Automatically downloads and processes new or updated files.","40","POST /api/integrations/google/sync","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","18","test_endpoint_smoke[GET-/api/documents/{document_id}/content]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"**Update Document Content**
+
+Creates a new version of the document with the updated content. 
+Maintains a full audit trail of changes.","103","PATCH /api/documents/{document_id}/content","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Analyze a document using a template and LLM.","53","POST /api/reports/analyze","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","1","test_openapi_endpoints[/api/documents/upload-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"No description provided","79","PATCH /api/templates/{template_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","11","test_openapi_endpoints[/api/logs/usage-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","6","test_endpoint_smoke[POST-/api/categories]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"**Upload and Process Document**
+
+Uploads a physical file (PDF, Image, Office) to secure storage and triggers an **AI-powered background processing pipeline**.
+- **Step 1:** Validate file and duplicate check.
+- **Step 2:** Upload to S3.
+- **Step 3:** Trigger extraction, categorization, and RAG ingestion.
+- **Returns:** 202 Accepted with document metadata. Check WebSocket or status endpoint for updates.","265","POST /api/documents/upload","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","10","test_openapi_endpoints[/api/roles-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","14","test_openapi_endpoints[/api/folders/{folder_id}-patch]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"**Trigger Document Reprocessing**
+
+Manually triggers the AI background pipeline for an existing document. 
+Useful if extraction failed or if you want to apply updated AI models.","294","POST /api/documents/{document_id}/reprocess","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"AI Template Builder: Generates a complete professional template based on classification.","25","POST /api/templates/ai-builder","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Log a new metered usage event.","27","POST /api/logs/usage","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","23","test_usage_metrics","e2e","2026-04-30","passed","2026-04-30","","test_api_v3_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","15","test_endpoint_smoke[DELETE-/api/folders/{folder_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","6","test_openapi_endpoints[/api/tenants/register-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","10","test_openapi_endpoints[/api/notifications/-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Delete a custom role.","52","DELETE /api/roles/{role_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","11","test_openapi_endpoints[/api/logs/audit-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[POST-/api/billing/webhooks/paypal]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"No description provided","18","GET /api/users/me","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","17","test_openapi_endpoints[/api/metering/logs-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Retrieve notifications for the current user with status filters.","40","GET /api/notifications/","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Create a new industry.","22","POST /api/industries","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Create a test notification for the current user.","31","POST /api/notifications/test-notify","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[DELETE-/api/notifications/{notification_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"","9","test_openapi_endpoints[/api/plans-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","11","test_openapi_endpoints[/api/admin/billing/failed-get]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"Update a custom role for the current tenant.
+System roles cannot be modified through this endpoint.","44","PATCH /api/roles/{role_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","11","test_endpoint_smoke[GET-/api/integrations/google/files]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","10","test_endpoint_smoke[GET-/api/documents/{document_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve comprehensive platform metrics using raw SQL.","22","GET /api/admin/metrics","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Retrieve payment and invoice history for the current tenant.","26","GET /api/billing/history","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","14","test_endpoint_smoke[GET-/api/admin/metrics]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Create a new document category within an industry.","54","POST /api/categories","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"Delete an industry.","20","DELETE /api/industries/{industry_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","7","test_endpoint_smoke[POST-/api/llm/chat/summarize]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Retrieve a specific category and its subcategories.","55","GET /api/categories/{category_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"","34","test_openapi_endpoints[/api/documents/manual-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"","27534","test_upload_and_status_flow","e2e","2026-04-30","passed","2026-04-30","","test_playwright_api","",""
+"","10","test_openapi_endpoints[/api/notifications/test-notify-post]","e2e","2026-04-30","passed","2026-04-30","","test_all_openapi","",""
+"**Delete Document**
+
+Soft-deletes a document and its associated data.","49","DELETE /api/documents/{document_id}","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","8","test_endpoint_smoke[POST-/api/integrations/google/sync]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""
+"Manually record usage for a specific metric.","59","POST /api/metering/record","e2e","2026-04-30","passed","2026-04-30","","test_comprehensive","",""
+"
+Dynamically tests all endpoints from OpenAPI fetched via URL.
+","12","test_endpoint_smoke[DELETE-/api/documents/{document_id}]","e2e","2026-04-30","passed","2026-04-30","","test_all_endpoints","",""

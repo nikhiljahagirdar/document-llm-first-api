@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: doc-intel-app
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres123@db:5432/document_mgmt
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:

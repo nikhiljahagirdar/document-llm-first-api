@@ -1,0 +1,8 @@
+Status: 200
+Headers: {
+  "date": "Tue, 28 Apr 2026 15:10:15 GMT",
+  "server": "uvicorn",
+  "content-length": "60",
+  "content-type": "application/json"
+}
+Body: {"message":"Welcome to the Document Management System API!"}
