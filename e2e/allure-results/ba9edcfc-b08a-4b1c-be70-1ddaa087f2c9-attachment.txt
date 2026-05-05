@@ -1,2 +1,0 @@
-Document 32ac8905-c82f-41dd-be58-6f0fa40d3009 reached final status: processed
-History of statuses seen: {'categorizing', 'processed', 'extracting', 'ingesting'}

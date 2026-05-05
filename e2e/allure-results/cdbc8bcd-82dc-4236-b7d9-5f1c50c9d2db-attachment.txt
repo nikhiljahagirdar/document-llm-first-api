@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:52:13 GMT",
-  "server": "uvicorn",
-  "content-length": "449",
-  "content-type": "application/json"
-}
-Body: {"subscription_id":"793b61bc-3eb6-4667-bde1-e4e221e825db","status":"active","current_period_end":"2030-01-01T00:00:00","plan":{"name":"Free","description":null,"price":0.0,"currency":"USD","limits":{"ai_limit":1000000,"doc_limit":5,"ocr_pages":10000,"total_tokens":1000000,"storage_limit_mb":10240},"is_active":true,"plan_id":"6e289ce8-5ce8-46a6-ad08-d246cc1048c9","stripe_monthly_price_id":null,"stripe_yearly_price_id":null,"paypal_plan_id":null}}

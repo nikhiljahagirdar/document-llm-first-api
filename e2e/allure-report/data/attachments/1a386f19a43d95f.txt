@@ -1,8 +1,0 @@
-Status: 400
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:51:37 GMT",
-  "server": "uvicorn",
-  "content-length": "58",
-  "content-type": "application/json"
-}
-Body: {"detail":"No content found in request body to summarize"}

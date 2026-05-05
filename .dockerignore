@@ -13,8 +13,17 @@ uploads/*
 !uploads/.gitkeep
 .snapshots
 docs/*
-!docs/*.pdf
-!docs/*.jpg
-!docs/*.png
-!docs/*.webp
-!docs/*.docx
+!docs/ac.pdf
+!docs/csr sample.pdf
+!docs/Statistical_Analysis_Plan_Redacted-v1.pdf
+e2e/allure-results/
+e2e/allure-report/
+e2e/uploads/
+.env
+Dockerfile
+docker-compose.yml
+alembic.ini
+migrations/
+tests/
+# Keep core app and scripts
+# ... but ignore large data files

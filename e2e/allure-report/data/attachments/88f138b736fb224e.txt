@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:51:35 GMT",
-  "server": "uvicorn",
-  "content-length": "853",
-  "content-type": "application/json"
-}
-Body: {"document_id":"7eaa6d7b-ad1b-465c-9fb5-3788f734eac3","filename":"test_294696ff.pdf","file_url":"https://nikhiljag-bucket.s3.amazonaws.com/tenant-04c2ffd1-a2dc-4b89-a1ad-4c48849122aa/documents/7eaa6d7b-ad1b-465c-9fb5-3788f734eac3.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAWGQHIK7IWUWCAFGK%2F20260430%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260430T125135Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0f056aa60f4e81f0a6e73617eaa0017ae68651b078929c13037356db706b926e","industry_id":null,"category_id":null,"subcategory_id":null,"folder_id":null,"industry_name":null,"category_name":null,"subcategory_name":null,"google_file_id":null,"google_last_modified":null,"status":"extracting","file_size":81238,"file_type":null,"page_count":null,"metadata":{},"created_on":"2026-04-30T16:51:32.885026","versions":[],"images":[]}

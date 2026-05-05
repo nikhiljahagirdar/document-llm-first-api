@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:52:14 GMT",
-  "server": "uvicorn",
-  "content-length": "973",
-  "content-type": "application/json"
-}
-Body: {"tenant_id":"04c2ffd1-a2dc-4b89-a1ad-4c48849122aa","name":"Demo Tenant","org_name":"Demo Corporation","type":"enterprise","metrics":{"total_documents":82,"total_users":5,"processed_documents":35,"failed_documents":37},"recent_documents":[{"id":"d7d29681-2c52-41a3-b5fb-8d60337a32b5","filename":"test_upload_cdd8_16.1.2-sample-case-report-form.pdf","status":"extracting","created_on":"2026-04-30T16:51:35.273383"},{"id":"7eaa6d7b-ad1b-465c-9fb5-3788f734eac3","filename":"test_294696ff.pdf","status":"failed","created_on":"2026-04-30T16:51:32.885026"},{"id":"1ffcfe51-a612-4f57-9861-6b9d64e3bb18","filename":"test_report_008848.txt","status":"processed","created_on":"2026-04-30T16:51:31.716419"},{"id":"cd560338-c1ee-4867-89b5-211fa58fbc85","filename":"e2e_test_6ee2be.pdf","status":"failed","created_on":"2026-04-30T16:51:12.656477"},{"id":"0012494e-8bea-45ae-b759-477563f75d86","filename":"test_7067f556.pdf","status":"failed","created_on":"2026-04-30T16:51:11.893599"}]}

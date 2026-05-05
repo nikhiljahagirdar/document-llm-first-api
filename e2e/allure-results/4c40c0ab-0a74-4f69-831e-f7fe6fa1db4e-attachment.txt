@@ -1,8 +1,0 @@
-Status: 202
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:51:34 GMT",
-  "server": "uvicorn",
-  "content-length": "888",
-  "content-type": "application/json"
-}
-Body: {"document_id":"d7d29681-2c52-41a3-b5fb-8d60337a32b5","filename":"test_upload_cdd8_16.1.2-sample-case-report-form.pdf","file_url":"https://nikhiljag-bucket.s3.amazonaws.com/tenant-04c2ffd1-a2dc-4b89-a1ad-4c48849122aa/documents/d7d29681-2c52-41a3-b5fb-8d60337a32b5.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAWGQHIK7IWUWCAFGK%2F20260430%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260430T125135Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d233ecc551b1dc393bf4800abd8b72b797e2923f1af7e309aef124c2cf0db080","industry_id":null,"category_id":null,"subcategory_id":null,"folder_id":null,"industry_name":null,"category_name":null,"subcategory_name":null,"google_file_id":null,"google_last_modified":null,"status":"processing","file_size":252870,"file_type":null,"page_count":null,"metadata":{},"created_on":"2026-04-30T16:51:35.273383","versions":[],"images":[]}

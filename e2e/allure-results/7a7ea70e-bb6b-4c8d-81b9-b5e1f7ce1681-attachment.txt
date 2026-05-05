@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:52:14 GMT",
-  "server": "uvicorn",
-  "content-length": "291",
-  "content-type": "application/json"
-}
-Body: [{"metric_name":"AI Usage (Tokens)","total_quantity":1089050.0,"limit":1000000,"usage_percent":108.91},{"metric_name":"OCR Usage (Pages)","total_quantity":344.0,"limit":10000,"usage_percent":3.44},{"metric_name":"Storage Usage (MB)","total_quantity":31.08,"limit":10240,"usage_percent":0.3}]

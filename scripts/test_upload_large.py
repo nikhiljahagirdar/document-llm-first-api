@@ -28,5 +28,10 @@ def upload_file(file_path):
         return None
 
 if __name__ == "__main__":
-    file_to_upload = "docs/CSR_Redacted.pdf"
+    # Note: Large sample files were removed to keep the bundle size under 5MB.
+    # Using a smaller sample for basic functionality check.
+    file_to_upload = "docs/Statistical_Analysis_Plan_Redacted-v1.pdf"
+    if not os.path.exists(file_to_upload):
+        file_to_upload = "docs/ac.pdf"
+        
     doc_id = upload_file(file_to_upload)

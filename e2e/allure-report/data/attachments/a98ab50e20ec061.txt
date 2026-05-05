@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:52:19 GMT",
-  "server": "uvicorn",
-  "content-length": "20",
-  "content-type": "application/json"
-}
-Body: {"authorized":false}

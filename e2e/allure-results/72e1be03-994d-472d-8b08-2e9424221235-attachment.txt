@@ -1,8 +1,0 @@
-Status: 404
-Headers: {
-  "date": "Tue, 28 Apr 2026 15:09:50 GMT",
-  "server": "uvicorn",
-  "content-length": "23",
-  "content-type": "application/json"
-}
-Body: {"detail":"No content"}

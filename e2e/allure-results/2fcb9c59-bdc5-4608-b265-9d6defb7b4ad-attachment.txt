@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:52:19 GMT",
-  "server": "uvicorn",
-  "content-length": "439",
-  "content-type": "application/json"
-}
-Body: {"url":"https://accounts.google.com/o/oauth2/v2/auth?client_id=489837897756-lj1bes8v43tk9g5hoig8gc0i7npr9bgh.apps.googleusercontent.com&redirect_uri=http://localhost:3000/auth/redirect&response_type=code&scope=https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid&access_type=offline&prompt=consent&state=d5feab67-20bd-4f5a-9fb4-9152b42e3fdf"}

@@ -1,2 +1,0 @@
-Document 79375312-5e80-4bd2-b992-58140a22d520 reached final status: failed
-History of statuses seen: {'failed', 'extracting'}

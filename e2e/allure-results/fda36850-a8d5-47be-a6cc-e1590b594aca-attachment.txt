@@ -1,8 +1,0 @@
-Status: 404
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:52:15 GMT",
-  "server": "uvicorn",
-  "content-length": "47",
-  "content-type": "application/json"
-}
-Body: {"detail":"Template not found or unauthorized"}

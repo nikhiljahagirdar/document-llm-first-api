@@ -1,8 +1,0 @@
-Status: 202
-Headers: {
-  "date": "Tue, 28 Apr 2026 15:09:50 GMT",
-  "server": "uvicorn",
-  "content-length": "920",
-  "content-type": "application/json"
-}
-Body: {"document_id":"a613f44d-d1c8-49bf-aff3-8a7ea6a54042","filename":"test_upload_936b_1685832458_Halftoneissues.jpg.7143a8f8bb8ab5bf2b33d569192ba512.jpg","file_url":"https://nikhiljag-bucket.s3.amazonaws.com/tenant-04c2ffd1-a2dc-4b89-a1ad-4c48849122aa/documents/a613f44d-d1c8-49bf-aff3-8a7ea6a54042.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAWGQHIK7IWUWCAFGK%2F20260428%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260428T150951Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=7bc8fa870881276f0f07a2499f60221c3dc5e9f3d738aeda7a1f6d8035130966","industry_id":null,"category_id":null,"subcategory_id":null,"folder_id":null,"industry_name":null,"category_name":null,"subcategory_name":null,"google_file_id":null,"google_last_modified":null,"status":"processing","file_size":502885,"file_type":null,"page_count":null,"metadata":{},"created_on":"2026-04-28T19:09:51.127348","versions":[],"images":[]}

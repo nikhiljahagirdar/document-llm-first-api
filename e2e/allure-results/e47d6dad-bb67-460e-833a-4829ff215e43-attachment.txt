@@ -1,8 +1,0 @@
-Status: 200
-Headers: {
-  "date": "Thu, 30 Apr 2026 12:51:37 GMT",
-  "server": "uvicorn",
-  "content-length": "469",
-  "content-type": "application/json"
-}
-Body: {"response":"*   This document is an Aadhaar Enrolment Letter from the Unique Identification Authority of India (UIDAI).\n*   It belongs to Nikhil Krishna Jahagirdar, providing their Aadhaar Number (9868 7029 5438), enrollment details, address, and mobile number.\n*   The letter specifies that Aadhaar is a proof of identity (not citizenship), is valid throughout the country, and will be helpful for availing government and non-government services.","suggestions":[]}
