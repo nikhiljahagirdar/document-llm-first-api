@@ -22,6 +22,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
     except WebSocketDisconnect:
         await manager.disconnect(user_id, websocket)
 
+@router.get("/", response_model=List[NotificationResponse])
 @router.get("", response_model=List[NotificationResponse])
 async def get_notifications(
     limit: int = 50,
@@ -37,6 +38,7 @@ async def get_notifications(
     return await service.list_notifications(conn, current_user.user_id, limit, offset, status)
 
 @router.post("/{notification_id}/read")
+@router.post("/{notification_id}/read/")
 async def mark_notification_as_read(
     notification_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),
@@ -53,6 +55,7 @@ async def mark_notification_as_read(
     return {"status": "success"}
 
 @router.post("/read-all")
+@router.post("/read-all/")
 async def mark_all_notifications_as_read(
     current_user: Any = Depends(get_current_user),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -65,6 +68,7 @@ async def mark_all_notifications_as_read(
     return {"status": "success"}
 
 @router.post("/test-notify")
+@router.post("/test-notify/")
 async def create_test_notification(
     current_user: Any = Depends(get_current_user),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -81,6 +85,7 @@ async def create_test_notification(
     )
 
 @router.delete("/{notification_id}")
+@router.delete("/{notification_id}/")
 async def delete_notification(
     notification_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),

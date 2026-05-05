@@ -15,6 +15,7 @@ async def get_industry_service():
 # --- Industry Endpoints ---
 
 @router.get("", response_model=List[IndustryResponse])
+@router.get("/", response_model=List[IndustryResponse])
 async def get_all_industries(
     search: Optional[str] = None,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),

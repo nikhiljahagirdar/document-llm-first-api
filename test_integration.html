@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .api-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .api-endpoint {
+            margin-bottom: 15px;
+        }
+        .method {
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        .url {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .btn:hover { opacity: 0.9; }
+        .response {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .loading { opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Google Drive Integration API Test</h1>
+            <p>Test the Google Drive integration endpoints with your JWT token</p>
+        </div>
+
+        <!-- JWT Token Input -->
+        <div class="api-section">
+            <h3>🔐 Authentication</h3>
+            <div class="api-endpoint">
+                <label for="jwt-token">JWT Token:</label>
+                <input type="password" id="jwt-token" placeholder="Enter your JWT token here" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+            </div>
+        </div>
+
+        <!-- Test Buttons -->
+        <div class="api-section">
+            <h3>🧪 API Tests</h3>
+            
+            <div class="api-endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/integrations/google/auth-url</div>
+                <button class="btn btn-primary" onclick="testAuthUrl()">Get Auth URL</button>
+            </div>
+
+            <div class="api-endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/integrations/google/status</div>
+                <button class="btn btn-secondary" onclick="testAuthStatus()">Check Status</button>
+            </div>
+
+            <div class="api-endpoint">
+                <div class="method">POST</div>
+                <div class="url">/api/integrations/google/sync</div>
+                <button class="btn btn-success" onclick="testSync()">Sync Drive</button>
+            </div>
+
+            <div class="api-endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/integrations/google/files</div>
+                <button class="btn btn-warning" onclick="testListFiles()">List Files</button>
+            </div>
+        </div>
+
+        <!-- Response Display -->
+        <div id="response-container" style="display: none;">
+            <h3>📋 API Response</h3>
+            <div id="api-response" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+
+        function getAuthToken() {
+            return document.getElementById('jwt-token').value.trim();
+        }
+
+        function getHeaders() {
+            const token = getAuthToken();
+            if (!token) {
+                alert('Please enter your JWT token');
+                return null;
+            }
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        function showResponse(response, isSuccess = true) {
+            const container = document.getElementById('response-container');
+            const responseDiv = document.getElementById('api-response');
+            
+            container.style.display = 'block';
+            responseDiv.className = `response ${isSuccess ? 'success' : 'error'}`;
+            responseDiv.textContent = JSON.stringify(response, null, 2);
+        }
+
+        async function testAuthUrl() {
+            const headers = getHeaders();
+            if (!headers) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/integrations/google/auth-url`, {
+                    headers: headers
+                });
+                const data = await response.json();
+                showResponse(data);
+                
+                // Test if URL is valid
+                if (data.url && data.url.includes('accounts.google.com')) {
+                    console.log('✅ Auth URL generated successfully');
+                }
+            } catch (error) {
+                showResponse({ error: error.message }, false);
+            }
+        }
+
+        async function testAuthStatus() {
+            const headers = getHeaders();
+            if (!headers) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/integrations/google/status`, {
+                    headers: headers
+                });
+                const data = await response.json();
+                showResponse(data);
+                
+                if (data.authorized !== undefined) {
+                    console.log('✅ Auth status check successful');
+                }
+            } catch (error) {
+                showResponse({ error: error.message }, false);
+            }
+        }
+
+        async function testSync() {
+            const headers = getHeaders();
+            if (!headers) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/integrations/google/sync`, {
+                    method: 'POST',
+                    headers: headers
+                });
+                const data = await response.json();
+                showResponse(data);
+                
+                if (data.status === 'success') {
+                    console.log('✅ Sync initiated successfully');
+                }
+            } catch (error) {
+                showResponse({ error: error.message }, false);
+            }
+        }
+
+        async function testListFiles() {
+            const headers = getHeaders();
+            if (!headers) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/integrations/google/files`, {
+                    headers: headers
+                });
+                const data = await response.json();
+                showResponse(data);
+                
+                if (Array.isArray(data)) {
+                    console.log(`✅ Retrieved ${data.length} files`);
+                }
+            } catch (error) {
+                showResponse({ error: error.message }, false);
+            }
+        }
+
+        // Auto-test on page load if token is stored
+        window.addEventListener('DOMContentLoaded', () => {
+            const storedToken = localStorage.getItem('test_jwt_token');
+            if (storedToken) {
+                document.getElementById('jwt-token').value = storedToken;
+            }
+        });
+
+        // Save token on input
+        document.getElementById('jwt-token').addEventListener('input', (e) => {
+            localStorage.setItem('test_jwt_token', e.target.value);
+        });
+    </script>
+</body>
+</html>

@@ -52,3 +52,13 @@
 [2026-05-04 16:08:27] DEBUG: Extraction failed for d145b4b6-f234-43cd-923c-070555bc3d95
 [2026-05-04 17:50:01] DEBUG: Starting background processing for document d145b4b6-f234-43cd-923c-070555bc3d95
 [2026-05-04 17:50:01] ERROR: d145b4b6-f234-43cd-923c-070555bc3d95 failed: LIMIT REACHED: You have used 100% of your OCR Usage (Pages) allowance. Operation cancelled.
+[2026-05-05 17:36:36] ERROR: retry_failed_documents error: relation "documents" does not exist
+LINE 1: SELECT * FROM documents WHERE status = 'failed' AND is_activ...
+                      ^
+[2026-05-05 17:41:36] ERROR: retry_failed_documents error: relation "documents" does not exist
+LINE 1: SELECT * FROM documents WHERE status = 'failed' AND is_activ...
+                      ^
+[2026-05-05 18:01:35] DEBUG: Starting background processing for document eed65870-e5be-431d-919e-74fc58939e15
+[2026-05-05 18:01:37] DEBUG: Calling process_document for eed65870-e5be-431d-919e-74fc58939e15
+[2026-05-05 18:01:38] DEBUG: Extraction complete for eed65870-e5be-431d-919e-74fc58939e15. Source: pymupdf-native
+[2026-05-05 18:24:23] INFO: DB Pool closed, stopping retry_failed_documents loop.

@@ -30,7 +30,7 @@ async def get_category_service():
 async def get_subcategory_service():
     return SubcategoryDBService()
 
-@router.get("/public/", response_model=List[TemplateResponse])
+@router.get("/public", response_model=List[TemplateResponse])
 async def get_public_templates(
     search: Optional[str] = None,
     limit: int = 20,
@@ -47,7 +47,7 @@ async def get_public_templates(
     return await service.list_public_templates(conn, limit, offset, industry_id, category_id, subcategory_id, search)
 
 
-@router.get("/my/", response_model=List[TemplateResponse])
+@router.get("/my", response_model=List[TemplateResponse])
 async def get_my_templates(
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
@@ -124,7 +124,7 @@ async def ai_template_builder(
     return result
 
 
-@router.post("/", response_model=TemplateResponse)
+@router.post("", response_model=TemplateResponse)
 async def create_template(
     template_data: TemplateCreate, 
     conn: psycopg.AsyncConnection = Depends(get_raw_db),

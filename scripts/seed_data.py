@@ -292,16 +292,13 @@ async def seed_data():
         role_types = ["superadmin", "tenant_admin", "user", "viewer"]
         role_map = {}
         for r_name in role_types:
-            existing = await DBWrapper.fetch_one(conn, "SELECT role_id FROM roles WHERE name = %s AND tenant_id IS NULL", (r_name,))
-            if existing:
-                role_id = existing["role_id"]
-            else:
-                role_id = uuid.uuid4()
-                await DBWrapper.execute(conn, 
-                    "INSERT INTO roles (role_id, name, permissions, created_on) VALUES (%s, %s, %s, %s)", 
-                    (role_id, r_name, '{}', datetime.now()))
-                print(f"Seeded Role: {r_name}")
-            role_map[r_name] = role_id
+            r_id = uuid.uuid4()
+            perms = {"all": True} if r_name == "superadmin" else {"read": True, "write": r_name in ["tenant_admin", "user"]}
+            await DBWrapper.execute(conn, 
+                "INSERT INTO roles (role_id, name, permissions, created_on) VALUES (%s, %s, %s, %s)", 
+                (r_id, r_name, json.dumps(perms), datetime.now()))
+            role_map[r_name] = r_id
+            print(f"Seeded Role: {r_name}")
 
         # 2. Seed Industries / Categories / Subcategories
         for ind_data in NEW_HIERARCHY["industries"]:

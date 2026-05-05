@@ -6,6 +6,7 @@ import logging
 import traceback
 import certifi
 import ssl
+from datetime import datetime
 
 # Diagnostic check for dependencies
 try:
@@ -54,10 +55,23 @@ from app.config import settings
 from app.db_raw import get_pool, close_pool, DBWrapper
 
 from app.routers import (
-    admin, billing, categories, documents, industries, llm,
-    logs, metering, notifications, plans, reports, roles,
-    subcategories, templates, tenants, users,
-    folders, integrations
+    users,
+    documents,
+    llm,
+    industries,
+    billing,
+    plans,
+    tenants,
+    logs,
+    admin,
+    templates,
+    reports,
+    notifications,
+    metering,
+    categories,
+    subcategories,
+    roles,
+    integrations,
 )
 from app.routers.documents import retry_failed_documents
 
@@ -258,7 +272,6 @@ api_v1_router.include_router(metering.router)
 api_v1_router.include_router(categories.router)
 api_v1_router.include_router(subcategories.router)
 api_v1_router.include_router(roles.router)
-api_v1_router.include_router(folders.router)
 api_v1_router.include_router(integrations.router)
 
 # Mount the v1 router to the app

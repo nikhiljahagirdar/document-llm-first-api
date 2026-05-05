@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from uuid import UUID
 from typing import Optional, List
 from datetime import datetime
@@ -52,19 +52,27 @@ class UserCreate(UserBase):
         examples=["123e4567-e89b-12d3-a456-426614174001"]
     )
     
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v):
+    @model_validator(mode='after')
+    def validate_password(self):
         """Validate password strength."""
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        if not any(c.isupper() for c in v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not any(c.islower() for c in v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
-        return v
+        password = self.password
+        if password is None:
+            return self
+            
+        errors = []
+        if len(password) < 8:
+            errors.append('Password must be at least 8 characters long')
+        if not any(c.isupper() for c in password):
+            errors.append('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in password):
+            errors.append('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in password):
+            errors.append('Password must contain at least one digit')
+            
+        if errors:
+            raise ValueError('; '.join(errors))
+            
+        return self
 
 class UserUpdate(BaseModel):
     """Schema for updating user information."""
@@ -99,21 +107,27 @@ class UserUpdate(BaseModel):
         examples=[True]
     )
     
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v):
+    @model_validator(mode='after')
+    def validate_password(self):
         """Validate password strength if password is provided."""
-        if v is None:
-            return v
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        if not any(c.isupper() for c in v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not any(c.islower() for c in v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
-        return v
+        password = self.password
+        if password is None:
+            return self
+            
+        errors = []
+        if len(password) < 8:
+            errors.append('Password must be at least 8 characters long')
+        if not any(c.isupper() for c in password):
+            errors.append('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in password):
+            errors.append('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in password):
+            errors.append('Password must contain at least one digit')
+            
+        if errors:
+            raise ValueError('; '.join(errors))
+            
+        return self
 
 class UserResponse(UserBase):
     """Schema for user response data."""

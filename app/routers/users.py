@@ -46,7 +46,6 @@ async def get_tenant_service():
     **Response:** Returns the created user information including assigned tenant_id.
     """
 )
-@router.post("/register/", response_model=UserResponse)
 async def register_user(
     user_data: UserCreate, 
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -108,7 +107,6 @@ async def register_user(
     `Authorization: Bearer <access_token>`
     """
 )
-@router.post("/login/", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), 
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -163,7 +161,6 @@ async def login_for_access_token(
     **Response:** Returns complete user profile including tenant and role information.
     """
 )
-@router.get("/me/", response_model=UserResponse)
 async def read_users_me(current_user: Any = Depends(get_current_user)):
     return current_user
 
@@ -188,7 +185,6 @@ async def read_users_me(current_user: Any = Depends(get_current_user)):
     **Response:** Returns updated user profile information.
     """
 )
-@router.patch("/me/", response_model=UserResponse)
 async def update_user_me(
     user_update: UserUpdate,
     current_user: Any = Depends(get_current_user),

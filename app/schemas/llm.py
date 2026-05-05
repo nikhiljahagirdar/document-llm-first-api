@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 
 
@@ -59,3 +59,4 @@ class DocumentChatSuggestion(BaseModel):
 class DocumentChatResponse(BaseModel):
     response: str
     suggestions: List[DocumentChatSuggestion] = []
+    chart_data: Optional[Dict[str, Any]] = None

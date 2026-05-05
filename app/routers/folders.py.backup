@@ -13,9 +13,6 @@ async def get_folder_service():
     return FolderDBService()
 
 @router.get("", response_model=List[FolderResponse])
-@router.get("/", response_model=List[FolderResponse])
-async def list_folders(
-    parent_folder_id: Optional[uuid.UUID] = None,
     search: Optional[str] = None,
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -27,9 +24,6 @@ async def list_folders(
     return await service.list_folders(conn, tenant.tenant_id, parent_folder_id, search)
 
 @router.post("", response_model=FolderResponse, status_code=status.HTTP_201_CREATED)
-@router.post("/", response_model=FolderResponse, status_code=status.HTTP_201_CREATED)
-async def create_folder(
-    payload: FolderCreate,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -48,9 +42,6 @@ async def create_folder(
     )
 
 @router.get("/{folder_id}", response_model=FolderResponse)
-@router.get("/{folder_id}/", response_model=FolderResponse)
-async def get_folder(
-    folder_id: uuid.UUID,
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
     service: FolderDBService = Depends(get_folder_service)
@@ -64,9 +55,6 @@ async def get_folder(
     return folder
 
 @router.patch("/{folder_id}", response_model=FolderResponse)
-@router.patch("/{folder_id}/", response_model=FolderResponse)
-async def update_folder(
-    folder_id: uuid.UUID,
     payload: FolderUpdate,
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),

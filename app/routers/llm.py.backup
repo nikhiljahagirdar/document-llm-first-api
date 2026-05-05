@@ -58,8 +58,6 @@ async def get_subcategory_service():
 
 
 @router.post("/detect-industry", response_model=IndustryDetectionResponse)
-async def detect_document_industry(
-    request: IndustryDetectionRequest,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: IndustryDBService = Depends(get_industry_service),
@@ -117,6 +115,9 @@ async def detect_document_industry(
 
 
 @router.post("/generate", response_model=DocumentGenerationResponse)
+@router.post(
+    "/generate/", response_model=DocumentGenerationResponse
+)
 async def generate_document(
     request: DocumentGenerationRequest,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -249,6 +250,7 @@ async def generate_document(
 
 
 @router.post("/analyze-multimodal")
+@router.post("/analyze-multimodal/")
 async def analyze_multimodal(
     request: MultimodalAnalysisRequest,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -267,6 +269,7 @@ async def analyze_multimodal(
 
 
 @router.get("/documents/{document_id}/suggestions")
+@router.get("/documents/{document_id}/suggestions/")
 async def get_document_suggestions(
     document_id: uuid.UUID,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -291,14 +294,12 @@ async def get_document_suggestions(
         return {"suggestions": []}
 
     context = versions[0].get("content", "")
-    raw_suggestions = await LLMService.generate_suggestions(
-        context, current_user.tenant_id, conn, current_user.user_id
-    )
-    suggestions = [{"label": s, "type": "insight"} for s in raw_suggestions]
+    suggestions = []
     return {"suggestions": suggestions}
 
 
 @router.post("/chat/summarize")
+@router.post("/chat/summarize/")
 async def summarize_chat(
     body: Dict[str, Any] = Body(...),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -333,6 +334,7 @@ async def summarize_chat(
 
 
 @router.post("/chat/document", response_model=DocumentChatResponse)
+@router.post("/chat/document/")
 async def chat_with_document(
     request: ChatDocumentRequest,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -378,29 +380,8 @@ async def chat_with_document(
         document_id=document_id,
     )
 
-    # Extract chart data if present
-    chart_data = None
-    clean_response = ai_response
-    if "### DATA_FOR_CHART ###" in ai_response:
-        try:
-            parts = ai_response.split("### DATA_FOR_CHART ###")
-            clean_response = parts[0].strip()
-            chart_json = parts[1].strip()
-            # Handle potential markdown code blocks around the JSON
-            if chart_json.startswith("```"):
-                chart_json = chart_json.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-            chart_data = json.loads(chart_json)
-        except Exception as e:
-            print(f"DEBUG: Failed to parse chart data: {e}")
-
     # Generate suggestions based on the new context (response)
-    raw_suggestions = await LLMService.generate_suggestions(
-        f"User asked: {user_input}\nAI responded: {clean_response}", 
-        current_user.tenant_id, 
-        conn, 
-        current_user.user_id
-    )
-    suggestions = [{"label": s, "type": "question"} for s in raw_suggestions]
+    suggestions = []
 
     # Audit log entry for AI response
     await doc_service.execute(
@@ -411,16 +392,17 @@ async def chat_with_document(
             document_id,
             current_user.user_id,
             "ai_response",
-            clean_response,
+            ai_response,
             now,
             now,
         ),
     )
 
-    return {"response": clean_response, "suggestions": suggestions, "chart_data": chart_data}
+    return {"response": ai_response, "suggestions": suggestions}
 
 
 @router.post("/rag-agent", response_model=DocumentChatResponse)
+@router.post("/rag-agent/")
 async def general_rag_agent(
     request: ChatRAGRequest,
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -437,27 +419,7 @@ async def general_rag_agent(
         conn=conn, query=request.user_input, tenant_id=current_user.tenant_id
     )
 
-    # Extract chart data if present
-    chart_data = None
-    clean_response = ai_response
-    if "### DATA_FOR_CHART ###" in ai_response:
-        try:
-            parts = ai_response.split("### DATA_FOR_CHART ###")
-            clean_response = parts[0].strip()
-            chart_json = parts[1].strip()
-            if chart_json.startswith("```"):
-                chart_json = chart_json.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-            chart_data = json.loads(chart_json)
-        except Exception as e:
-            print(f"DEBUG: Failed to parse chart data in RAG Agent: {e}")
-
     # Generate general suggestions
-    raw_suggestions = await LLMService.generate_suggestions(
-        f"User asked: {request.user_input}\nAI responded: {clean_response}", 
-        current_user.tenant_id, 
-        conn, 
-        current_user.user_id
-    )
-    suggestions = [{"label": s, "type": "question"} for s in raw_suggestions]
+    suggestions = []
 
-    return {"response": clean_response, "suggestions": suggestions, "chart_data": chart_data}
+    return {"response": ai_response, "suggestions": suggestions}

@@ -589,6 +589,64 @@ class LLMService:
             return {"error": str(e)}, 0
 
     @staticmethod
+    async def generate_suggestions(
+        context: str, 
+        tenant_id: Any, 
+        conn: Any = None, 
+        user_id: Any = None,
+        max_suggestions: int = 3
+    ) -> List[str]:
+        """
+        Generate proactive follow-up suggestions based on the context.
+        """
+        from google.genai import types
+        from app.services.db.metering_db_service import MeteringDBService
+        
+        if conn and tenant_id:
+            await MeteringDBService().check_usage_limits(conn, uuid.UUID(str(tenant_id)), "ai")
+
+        prompt = f"""
+        Based on the following context, generate {max_suggestions} short, proactive follow-up questions or suggestions that a user might want to ask next.
+        
+        ### CONTEXT:
+        {context[:10000]}
+        
+        ### OUTPUT REQUIREMENTS:
+        Return ONLY a JSON array of strings. 
+        Example: ["What is the total amount?", "When is the next payment due?", "List the key risks."]
+        """
+
+        try:
+            client = get_genai_client()
+            response = await client.aio.models.generate_content(
+                model=settings.AI_LLM_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a proactive assistant. Only return a valid JSON array of strings.",
+                    response_mime_type="application/json",
+                    temperature=0.7,
+                ),
+            )
+            await LLMService.log_response_usage(conn, tenant_id, response, user_id=user_id, input_text=prompt)
+            
+            text = response.text.strip()
+            # Clean up potential markdown code blocks
+            if text.startswith('```'):
+                lines = text.split('\n')
+                if lines[0].startswith('```'): lines = lines[1:]
+                if lines[-1].startswith('```'): lines = lines[:-1]
+                text = '\n'.join(lines).strip()
+            
+            import json
+            suggestions = json.loads(text)
+            if isinstance(suggestions, list):
+                return [str(s) for s in suggestions[:max_suggestions]]
+            return []
+        except Exception as e:
+            logger.error(f"Generate suggestions failed: {e}")
+            return []
+
+    @staticmethod
     async def query_document(context: str, question: str, document_name: str, tenant_id: Any, conn: Any = None, user_id: Any = None) -> str:
         """
         Answer a question about a document using the provided context.

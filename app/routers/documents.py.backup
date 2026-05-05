@@ -296,8 +296,6 @@ async def process_document_background(
 
 
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_202_ACCEPTED)
-async def upload_document(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     folder_id: Optional[uuid.UUID] = None,
     current_user: Any = Depends(get_current_user),
@@ -369,8 +367,6 @@ async def upload_document(
         raise HTTPException(status_code=500, detail=f"Critical upload failure: {e}")
 
 @router.post("/manual", response_model=DocumentResponse)
-async def create_document_manual(
-    payload: DocumentCreateManual,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -404,8 +400,6 @@ async def create_document_manual(
     return prepare_document_response(doc)
 
 @router.post("/from-template", response_model=DocumentResponse)
-async def create_document_from_template(
-    payload: DocumentCreateFromTemplate,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -560,8 +554,6 @@ async def import_google_doc(
         raise HTTPException(status_code=500, detail=f"Google Doc import failed: {e}")
 
 @router.get("/{document_id}", response_model=DocumentResponse)
-async def get_document(
-    document_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
     conn: psycopg.AsyncConnection = Depends(get_raw_db),
@@ -585,6 +577,7 @@ async def get_document(
     return prepare_document_response(doc)
 
 @router.get("", response_model=List[DocumentListResponse])
+@router.get("/", response_model=List[DocumentListResponse])
 async def get_documents(
     search: Optional[str] = None,
     folder_id: Optional[uuid.UUID] = None,
@@ -609,8 +602,6 @@ async def get_documents(
     return await service.list_documents(conn, tenant.tenant_id, current_user.user_id, is_admin, search, folder_id, limit, offset)
 
 @router.get("/{document_id}/content", response_model=PaginatedDocumentContentResponse)
-async def get_document_content(
-    document_id: uuid.UUID,
     page: int = 1,
     page_size: int = 10000,
     current_user: Any = Depends(get_current_user),
@@ -721,8 +712,6 @@ async def get_document_content(
     }
 
 @router.patch("/{document_id}/content", response_model=DocumentContentResponse)
-async def update_document_content(
-    document_id: uuid.UUID,
     content_update: DocumentContentUpdate,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
@@ -761,6 +750,7 @@ async def update_document_content(
     return new_versions[0]
 
 @router.post("/{document_id}/reprocess", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/{document_id}/reprocess/", status_code=status.HTTP_202_ACCEPTED)
 async def reprocess_document(
     document_id: uuid.UUID,
     background_tasks: BackgroundTasks,
