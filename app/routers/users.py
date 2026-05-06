@@ -52,37 +52,44 @@ async def register_user(
     service: UserDBService = Depends(get_user_service),
     tenant_service: TenantDBService = Depends(get_tenant_service)
 ):
-    # Check if user exists
-    existing = await service.get_user_by_email(conn, user_data.email)
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    tenant_id = user_data.tenant_id
-    if not tenant_id:
-        # If no tenant_id provided, create a personal tenant for this user
-        tenant = await tenant_service.create_tenant(conn, {
-            "name": f"{user_data.first_name}'s Workspace",
-            "slug": f"user-{uuid.uuid4().hex[:8]}"
-        })
-        tenant_id = tenant["tenant_id"]
-    
-    hashed_pw = get_password_hash(user_data.password)
-    data = user_data.model_dump()
-    data.pop("password")
-    data["password_hash"] = hashed_pw
-    data["tenant_id"] = tenant_id
-    if not data.get("user_id"):
-        data["user_id"] = str(uuid.uuid4())
-    new_user = await service.create_user(conn, data)
-    
-    # Record Audit Log
-    await AuditLogDBService.record_audit_log(
-        conn, tenant_id, new_user["user_id"],
-        "user_registered", "user", str(new_user["user_id"]),
-        {"email": user_data.email}
-    )
-    
-    return new_user
+    try:
+        # Check if user exists
+        existing = await service.get_user_by_email(conn, user_data.email)
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        tenant_id = user_data.tenant_id
+        if not tenant_id:
+            # If no tenant_id provided, create a personal tenant for this user
+            tenant = await tenant_service.create_tenant(conn, {
+                "name": f"{user_data.first_name}'s Workspace" if user_data.first_name else "My Workspace",
+                "slug": f"user-{uuid.uuid4().hex[:8]}"
+            })
+            tenant_id = tenant["tenant_id"]
+        
+        hashed_pw = get_password_hash(user_data.password)
+        data = user_data.model_dump()
+        data.pop("password")
+        data["password_hash"] = hashed_pw
+        data["tenant_id"] = tenant_id
+        if not data.get("user_id"):
+            data["user_id"] = str(uuid.uuid4())
+        
+        new_user = await service.create_user(conn, data)
+        
+        # Record Audit Log
+        await AuditLogDBService.record_audit_log(
+            conn, tenant_id, new_user["user_id"],
+            "user_registered", "user", str(new_user["user_id"]),
+            {"email": user_data.email}
+        )
+        
+        return new_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Registration failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @router.post(
     "/login", 

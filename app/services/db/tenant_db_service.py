@@ -44,8 +44,8 @@ class TenantDBService(BaseDBService):
             config = {}
         await self.execute(
             conn, 
-            "INSERT INTO tenant_settings (tenant_id, config) VALUES (%s::uuid, %s)", 
-            (tenant_id, json.dumps(config))
+            "INSERT INTO tenant_settings (settings_id, tenant_id, config) VALUES (%s::uuid, %s::uuid, %s)", 
+            (str(uuid.uuid4()), tenant_id, json.dumps(config))
         )
 
     async def get_tenant_settings(self, conn: psycopg.AsyncConnection, tenant_id: str) -> Optional[dict]:

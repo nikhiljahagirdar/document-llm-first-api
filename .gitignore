@@ -165,3 +165,5 @@ e2e/allure-report/
 e2e/uploads/
 bg_worker.log
 .env 
+.env
+env.txt

@@ -7,7 +7,7 @@ import time
 from typing import Optional, Dict, List
 from fastapi import Request, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class APIVersioningMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         
         # Supported API versions
-        self.supported_versions = ["v1", "v1.0"]
+        self.supported_versions = ["v1", "v1.0", "v1.0.0"]
         self.current_version = "v1"
         
         # Deprecated versions with sunset dates
@@ -58,9 +58,9 @@ class APIVersioningMiddleware(BaseHTTPMiddleware):
         
         # Validate version
         if not self._is_version_supported(version):
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported API version: {version}. Supported versions: {', '.join(self.supported_versions)}"
+                content={"detail": f"Unsupported API version: {version}. Supported versions: {', '.join(self.supported_versions)}"}
             )
         
         # Add version to request state for downstream use
@@ -257,11 +257,19 @@ class APIValidationMiddleware(BaseHTTPMiddleware):
         method = request.method
         path = request.url.path
         
-        # Validate content type
-        self._validate_content_type(request, method, path)
-        
-        # Validate required headers
-        self._validate_required_headers(request, path)
+        # Only validate API endpoints
+        if path.startswith("/api/"):
+            try:
+                # Validate content type
+                self._validate_content_type(request, method, path)
+                
+                # Validate required headers
+                self._validate_required_headers(request, path)
+            except HTTPException as exc:
+                return JSONResponse(
+                    status_code=exc.status_code,
+                    content={"detail": exc.detail}
+                )
         
         # Add security headers
         response = await call_next(request)
