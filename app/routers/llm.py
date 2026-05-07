@@ -105,7 +105,7 @@ async def detect_document_industry(
                 await doc_service.update_document_statuses(
                     conn, 
                     request.document_id, 
-                    "processed", 
+                    "completed", 
                     f"AI detected classification: {detection.get('industry_name')} > {detection.get('category_name')} > {detection.get('subcategory_name')}",
                     current_user.user_id
                 )

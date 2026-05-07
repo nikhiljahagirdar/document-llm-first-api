@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 import psycopg
+import logging
 from app.db_raw import get_raw_db
-from app.schemas import UserResponse, UserCreate, UserUpdate, Token
+from app.schemas import UserResponse, UserCreate, UserUpdate, Token, UserRegisterResponse, GoogleAuthRequest
 from app.dependencies import get_current_user, get_current_tenant
 from app.security import (
     get_password_hash, 
@@ -12,10 +13,13 @@ from app.security import (
 from app.config import settings
 from typing import List, Optional, Any
 import uuid
+import httpx
 from datetime import datetime, timedelta
 from app.services.db.user_db_service import UserDBService
 from app.services.db.tenant_db_service import TenantDBService
 from app.services.db.audit_log_db_service import AuditLogDBService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,7 +31,7 @@ async def get_tenant_service():
 
 @router.post(
     "/register", 
-    response_model=UserResponse,
+    response_model=UserRegisterResponse,
     responses={
         400: {"description": "Email already registered", "model": dict},
         422: {"$ref": "#/components/responses/ValidationError"},
@@ -43,7 +47,7 @@ async def get_tenant_service():
     - Password must be at least 8 characters with uppercase, lowercase, and digits
     - First name and last name are optional but recommended
     
-    **Response:** Returns the created user information including assigned tenant_id.
+    **Response:** Returns the created user information along with a JWT access token for immediate use.
     """
 )
 async def register_user(
@@ -61,15 +65,23 @@ async def register_user(
         tenant_id = user_data.tenant_id
         if not tenant_id:
             # If no tenant_id provided, create a personal tenant for this user
+            tenant_name = user_data.org_name or (f"{user_data.first_name}'s Workspace" if user_data.first_name else "My Workspace")
             tenant = await tenant_service.create_tenant(conn, {
-                "name": f"{user_data.first_name}'s Workspace" if user_data.first_name else "My Workspace",
+                "name": tenant_name,
+                "type": user_data.tenant_type,
+                "org_name": user_data.org_name,
                 "slug": f"user-{uuid.uuid4().hex[:8]}"
             })
             tenant_id = tenant["tenant_id"]
+            
+            # Initialize default settings for new tenant
+            await tenant_service.initialize_tenant_settings(conn, tenant_id)
         
         hashed_pw = get_password_hash(user_data.password)
         data = user_data.model_dump()
         data.pop("password")
+        data.pop("tenant_type", None)
+        data.pop("org_name", None)
         data["password_hash"] = hashed_pw
         data["tenant_id"] = tenant_id
         if not data.get("user_id"):
@@ -84,7 +96,18 @@ async def register_user(
             {"email": user_data.email}
         )
         
-        return new_user
+        # Generate token for immediate use (Stepper flow support)
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        token_str, _ = create_access_token(
+            data={"sub": new_user["email"], "tenant_id": str(new_user["tenant_id"])}, 
+            expires_delta=access_token_expires
+        )
+        
+        return {
+            "user": new_user,
+            "access_token": token_str,
+            "token_type": "bearer"
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -242,3 +265,139 @@ async def list_tenant_users(
     service: UserDBService = Depends(get_user_service)
 ):
     return await service.list_tenant_users(conn, current_user.tenant_id)
+
+
+@router.post(
+    "/google-auth",
+    response_model=Token,
+    summary="Authenticate or register user via Google OAuth",
+    description="""
+    Authenticates a user using Google OAuth details.
+    If the user already exists (found by google_id or email), they will be logged in.
+    If they do not exist, a new user profile (and workspace/tenant if needed) will be created, and then they will be logged in.
+    """
+)
+async def google_auth(
+    auth_request: GoogleAuthRequest,
+    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    service: UserDBService = Depends(get_user_service),
+    tenant_service: TenantDBService = Depends(get_tenant_service)
+):
+    try:
+        if auth_request.code:
+            # Exchange code for tokens
+            async with httpx.AsyncClient() as client:
+                token_resp = await client.post("https://oauth2.googleapis.com/token", data={
+                    "code": auth_request.code,
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": "postmessage",
+                    "grant_type": "authorization_code"
+                })
+                token_resp.raise_for_status()
+                token_data = token_resp.json()
+                access_token = token_data.get("access_token")
+                
+                # Fetch user info using the access token
+                user_resp = await client.get("https://www.googleapis.com/oauth2/v3/userinfo", headers={
+                    "Authorization": f"Bearer {access_token}"
+                })
+                user_resp.raise_for_status()
+                user_info = user_resp.json()
+                
+                auth_request.email = user_info.get("email")
+                auth_request.google_id = user_info.get("sub")
+                auth_request.first_name = user_info.get("given_name", auth_request.first_name)
+                auth_request.last_name = user_info.get("family_name", auth_request.last_name)
+                auth_request.image_url = user_info.get("picture", auth_request.image_url)
+
+        if not auth_request.google_id or not auth_request.email:
+            raise HTTPException(status_code=400, detail="Missing google_id or email")
+
+        # 1. Check if user already exists
+        user = await service.get_user_by_google_id_or_email(conn, auth_request.google_id, auth_request.email)
+        
+        if user:
+            # User exists, update Google details if not set (e.g. if they previously registered via local password)
+            update_data = {}
+            if not user.get("google_id"):
+                update_data["google_id"] = auth_request.google_id
+            if auth_request.image_url and not user.get("profile_image"):
+                update_data["profile_image"] = auth_request.image_url
+            if not user.get("provider") or user.get("provider") == "local":
+                update_data["provider"] = "google"
+                
+            if update_data:
+                user = await service.update_user(conn, str(user["user_id"]), update_data)
+                
+            # Record Audit Log for login
+            await AuditLogDBService.record_audit_log(
+                conn, user["tenant_id"], user["user_id"],
+                "user_login", "auth", str(user["user_id"]),
+                {"method": "google_oauth"}
+            )
+        else:
+            # 2. User does not exist, create tenant/workspace and register them
+            tenant_id = auth_request.tenant_id
+            if not tenant_id:
+                # Create a personal tenant for this user
+                tenant_name = f"{auth_request.first_name}'s Workspace" if auth_request.first_name else "My Workspace"
+                tenant = await tenant_service.create_tenant(conn, {
+                    "name": tenant_name,
+                    "type": "individual",
+                    "org_name": None,
+                    "slug": f"user-{uuid.uuid4().hex[:8]}"
+                })
+                tenant_id = tenant["tenant_id"]
+                
+                # Initialize default settings for new tenant
+                await tenant_service.initialize_tenant_settings(conn, tenant_id)
+            
+            # Since they login via Google, we generate a secure random password hash
+            import secrets
+            random_pw = secrets.token_urlsafe(32)
+            hashed_pw = get_password_hash(random_pw)
+            
+            user_data = {
+                "user_id": str(uuid.uuid4()),
+                "tenant_id": str(tenant_id),
+                "email": auth_request.email,
+                "password_hash": hashed_pw,
+                "first_name": auth_request.first_name,
+                "last_name": auth_request.last_name,
+                "google_id": auth_request.google_id,
+                "profile_image": auth_request.image_url,
+                "provider": "google",
+                "is_active": True
+            }
+            
+            user = await service.create_user(conn, user_data)
+            
+            # Record Audit Log for registration
+            await AuditLogDBService.record_audit_log(
+                conn, tenant_id, user["user_id"],
+                "user_registered", "user", str(user["user_id"]),
+                {"email": auth_request.email, "method": "google_oauth"}
+            )
+        
+        # 3. Generate JWT access token
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        token_str, expire_dt = create_access_token(
+            data={"sub": user["email"], "tenant_id": str(user["tenant_id"])}, 
+            expires_delta=access_token_expires
+        )
+        
+        expires_in = int(access_token_expires.total_seconds())
+        
+        return {
+            "access_token": token_str,
+            "token_type": "bearer",
+            "expires_at": expire_dt,
+            "expires_in": expires_in,
+            "user": user,
+            "google_refresh_token": refresh_token if 'refresh_token' in locals() else None
+        }
+    except Exception as e:
+        logger.error(f"Google authentication failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")
+

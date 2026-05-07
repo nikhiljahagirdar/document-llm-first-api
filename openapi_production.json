@@ -6,54 +6,13 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/users/register/": {
-      "post": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Register User",
-        "operationId": "register_user_api_users_register__post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/users/register": {
       "post": {
         "tags": [
           "users"
         ],
         "summary": "Register a new user",
-        "description": "Register a new user in the system. If no tenant_id is provided, a personal tenant\n    will be automatically created for the user.\n    \n    **Requirements:**\n    - Email must be unique across the system\n    - Password must be at least 8 characters with uppercase, lowercase, and digits\n    - First name and last name are optional but recommended\n    \n    **Response:** Returns the created user information including assigned tenant_id.",
+        "description": "Register a new user in the system. If no tenant_id is provided, a personal tenant\n    will be automatically created for the user.\n    \n    **Requirements:**\n    - Email must be unique across the system\n    - Password must be at least 8 characters with uppercase, lowercase, and digits\n    - First name and last name are optional but recommended\n    \n    **Response:** Returns the created user information along with a JWT access token for immediate use.",
         "operationId": "register_user_api_users_register_post",
         "requestBody": {
           "content": {
@@ -71,7 +30,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "$ref": "#/components/schemas/UserRegisterResponse"
                 }
               }
             }
@@ -95,47 +54,6 @@
           "500": {
             "description": "Internal Server Error",
             "$ref": "#/components/responses/InternalServerError"
-          }
-        }
-      }
-    },
-    "/api/users/login/": {
-      "post": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Login For Access Token",
-        "operationId": "login_for_access_token_api_users_login__post",
-        "requestBody": {
-          "content": {
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_login_for_access_token_api_users_login__post"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Token"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -188,122 +106,6 @@
           "500": {
             "description": "Internal Server Error",
             "$ref": "#/components/responses/InternalServerError"
-          }
-        }
-      }
-    },
-    "/api/users/me/": {
-      "get": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Read Users Me",
-        "operationId": "read_users_me_api_users_me__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Update User Me",
-        "operationId": "update_user_me_api_users_me__patch",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -507,71 +309,31 @@
         }
       }
     },
-    "/api/documents/upload/": {
+    "/api/users/google-auth": {
       "post": {
         "tags": [
-          "Documents Management"
+          "users"
         ],
-        "summary": "Upload Document",
-        "description": "**Upload and Process Document**\n\nUploads a physical file (PDF, Image, Office) to secure storage and triggers an **AI-powered background processing pipeline**.\n- **Step 1:** Validate file and duplicate check.\n- **Step 2:** Upload to S3.\n- **Step 3:** Trigger extraction, categorization, and RAG ingestion.\n- **Returns:** 202 Accepted with document metadata. Check WebSocket or status endpoint for updates.",
-        "operationId": "upload_document_api_documents_upload__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
+        "summary": "Authenticate or register user via Google OAuth",
+        "description": "Authenticates a user using Google OAuth details.\n    If the user already exists (found by google_id or email), they will be logged in.\n    If they do not exist, a new user profile (and workspace/tenant if needed) will be created, and then they will be logged in.",
+        "operationId": "google_auth_api_users_google_auth_post",
         "requestBody": {
-          "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_document_api_documents_upload__post"
+                "$ref": "#/components/schemas/GoogleAuthRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
-          "202": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DocumentResponse"
+                  "$ref": "#/components/schemas/Token"
                 }
               }
             }
@@ -671,71 +433,6 @@
         }
       }
     },
-    "/api/documents/manual/": {
-      "post": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Create Document Manual",
-        "description": "**Create Manual Document**\n\nCreates a new document entry based on raw text or HTML provided by the user. \nUseful for creating notes or reports directly within the platform.",
-        "operationId": "create_document_manual_api_documents_manual__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentCreateManual"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/documents/manual": {
       "post": {
         "tags": [
@@ -773,71 +470,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DocumentCreateManual"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/documents/from-template/": {
-      "post": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Create Document From Template",
-        "description": "**Create Document from Template**\n\nGenerates a new document using a pre-defined system or tenant template.\nPopulates placeholders with provided `template_data`.",
-        "operationId": "create_document_from_template_api_documents_from_template__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentCreateFromTemplate"
               }
             }
           }
@@ -996,71 +628,6 @@
         }
       }
     },
-    "/api/documents/{document_id}/": {
-      "get": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Get Document",
-        "description": "**Get Document Details**\n\nRetrieves full metadata, current status, and all versions/images associated with a specific document.",
-        "operationId": "get_document_api_documents__document_id___get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Document Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/documents/{document_id}": {
       "get": {
         "tags": [
@@ -1182,118 +749,6 @@
         }
       }
     },
-    "/api/documents/": {
-      "get": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Get Documents",
-        "description": "**List Documents**\n\nReturns a paginated list of documents accessible to the user.\n- Support for full-text search on filenames.\n- Filtering by `folder_id`.\n- Automatic tenant isolation.",
-        "operationId": "get_documents_api_documents__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "folder_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "title": "Offset"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DocumentListResponse"
-                  },
-                  "title": "Response Get Documents Api Documents  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/documents": {
       "get": {
         "tags": [
@@ -1389,164 +844,6 @@
                     "$ref": "#/components/schemas/DocumentListResponse"
                   },
                   "title": "Response Get Documents Api Documents Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/documents/{document_id}/content/": {
-      "get": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Get Document Content",
-        "description": "**Get Document Content (Paginated)**\n\nRetrieves the extracted text, HTML preview, and structured rich content for a document.\n- Supports **Physical Page-based Pagination** (for PDFs/Office docs).\n- If physical pages are not detected, it falls back to character-range pagination.",
-        "operationId": "get_document_content_api_documents__document_id__content__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Document Id"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 10000,
-              "title": "Page Size"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedDocumentContentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Update Document Content",
-        "description": "**Update Document Content**\n\nCreates a new version of the document with the updated content. \nMaintains a full audit trail of changes.",
-        "operationId": "update_document_content_api_documents__document_id__content__patch",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Document Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentContentUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentContentResponse"
                 }
               }
             }
@@ -1722,69 +1019,6 @@
         }
       }
     },
-    "/api/documents/{document_id}/reprocess/": {
-      "post": {
-        "tags": [
-          "Documents Management"
-        ],
-        "summary": "Reprocess Document",
-        "description": "**Trigger Document Reprocessing**\n\nManually triggers the AI background pipeline for an existing document. \nUseful if extraction failed or if you want to apply updated AI models.",
-        "operationId": "reprocess_document_api_documents__document_id__reprocess__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Document Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/documents/{document_id}/reprocess": {
       "post": {
         "tags": [
@@ -1832,71 +1066,6 @@
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/detect-industry/": {
-      "post": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "Detect Document Industry",
-        "description": "**AI Industry & Category Detection**\n\nAnalyzes document text and automatically maps it to the best matching Industry, Category, and Subcategory\nbased on the tenant's configured hierarchy. Returns UUIDs and confidence levels.",
-        "operationId": "detect_document_industry_api_llm_detect_industry__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IndustryDetectionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IndustryDetectionResponse"
-                }
               }
             }
           },
@@ -1961,71 +1130,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IndustryDetectionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/generate/": {
-      "post": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "Generate Document",
-        "description": "**AI Document Generation**\n\nGenerates a new, professional document based on a template and user-provided context.\n- If `template_id` is provided, it uses that specific template.\n- Otherwise, it searches for a suitable template based on industry/category criteria.\n- Generates a `.docx` file, uploads it to S3, and records it as a `GeneratedReport`.",
-        "operationId": "generate_document_api_llm_generate__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DocumentGenerationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DocumentGenerationResponse"
                 }
               }
             }
@@ -2108,69 +1212,6 @@
         }
       }
     },
-    "/api/llm/analyze-multimodal/": {
-      "post": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "Analyze Multimodal",
-        "description": "**AI Multimodal Analysis**\n\nPerforms deep analysis on a combination of document text and multiple associated images.\nProvides cross-modal insights and summaries.",
-        "operationId": "analyze_multimodal_api_llm_analyze_multimodal__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MultimodalAnalysisRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/llm/analyze-multimodal": {
       "post": {
         "tags": [
@@ -2212,69 +1253,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/documents/{document_id}/suggestions/": {
-      "get": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "Get Document Suggestions",
-        "description": "**Proactive Document Insights**\n\nAnalyzes the content of a specific document and generates 3-4 proactive suggestions,\nrisk warnings, or follow-up questions to help the user understand the document better.",
-        "operationId": "get_document_suggestions_api_llm_documents__document_id__suggestions__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Document Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2360,71 +1338,6 @@
         }
       }
     },
-    "/api/llm/chat/summarize/": {
-      "post": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "Summarize Chat",
-        "description": "**AI Summarization**\n\nSummarizes a block of text or document content into a concise, professional executive summary.",
-        "operationId": "summarize_chat_api_llm_chat_summarize__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true,
-                "title": "Body"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/llm/chat/summarize": {
       "post": {
         "tags": [
@@ -2464,69 +1377,6 @@
                 "type": "object",
                 "additionalProperties": true,
                 "title": "Body"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/chat/document/": {
-      "post": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "Chat With Document",
-        "description": "**Focused Document Chat (RAG)**\n\nAllows a conversation focused on a single specific document.\nUses semantic search (RAG) to find relevant sections and provides an answer\nalong with **intelligent follow-up suggestions**.",
-        "operationId": "chat_with_document_api_llm_chat_document__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatDocumentRequest"
               }
             }
           }
@@ -2618,69 +1468,6 @@
         }
       }
     },
-    "/api/llm/rag-agent/": {
-      "post": {
-        "tags": [
-          "AI & LLM Services"
-        ],
-        "summary": "General Rag Agent",
-        "description": "**General Knowledge Agent (Tenant-wide RAG)**\n\nQueries across ALL documents belonging to the current tenant.\nIdentifies relevant information from multiple sources to provide a unified answer\nand **intelligent follow-up suggestions**.",
-        "operationId": "general_rag_agent_api_llm_rag_agent__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChatRAGRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/llm/rag-agent": {
       "post": {
         "tags": [
@@ -2729,60 +1516,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocumentChatResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/industries/": {
-      "get": {
-        "tags": [
-          "industries"
-        ],
-        "summary": "Get All Industries",
-        "description": "List all supported industries and their associated categories with optional search.",
-        "operationId": "get_all_industries_api_industries__get",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/IndustryResponse"
-                  },
-                  "title": "Response Get All Industries Api Industries  Get"
                 }
               }
             }
@@ -3439,6 +2172,61 @@
         }
       }
     },
+    "/api/billing/plans/sync-stripe": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Synchronize database plans with Stripe",
+        "description": "Reads all subscription plans from the database, creates corresponding Products and Prices in Stripe if they don't exist, and updates the database with the Stripe Price IDs. This is an idempotent operation.",
+        "operationId": "sync_plans_with_stripe_api_billing_plans_sync_stripe_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StripeSyncResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/billing/webhooks/paypal": {
       "post": {
         "tags": [
@@ -3453,6 +2241,46 @@
                 "additionalProperties": true,
                 "type": "object",
                 "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/sync-session": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Synchronize checkout session and update subscription/invoice directly via Stripe SDK",
+        "description": "Fetches checkout session details directly using Stripe SDK and updates tenant subscription and invoice records.",
+        "operationId": "sync_checkout_session_api_billing_sync_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StripeSyncRequest"
               }
             }
           },
@@ -4580,14 +3408,14 @@
         }
       }
     },
-    "/api/templates/public/": {
+    "/api/templates/public": {
       "get": {
         "tags": [
           "templates"
         ],
         "summary": "Get Public Templates",
         "description": "Retrieve all public document generation templates with search and pagination.",
-        "operationId": "get_public_templates_api_templates_public__get",
+        "operationId": "get_public_templates_api_templates_public_get",
         "parameters": [
           {
             "name": "search",
@@ -4687,7 +3515,7 @@
                   "items": {
                     "$ref": "#/components/schemas/TemplateResponse"
                   },
-                  "title": "Response Get Public Templates Api Templates Public  Get"
+                  "title": "Response Get Public Templates Api Templates Public Get"
                 }
               }
             }
@@ -4705,14 +3533,14 @@
         }
       }
     },
-    "/api/templates/my/": {
+    "/api/templates/my": {
       "get": {
         "tags": [
           "templates"
         ],
         "summary": "Get My Templates",
         "description": "Retrieve templates owned by the current tenant or public templates.",
-        "operationId": "get_my_templates_api_templates_my__get",
+        "operationId": "get_my_templates_api_templates_my_get",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -4746,7 +3574,7 @@
                   "items": {
                     "$ref": "#/components/schemas/TemplateResponse"
                   },
-                  "title": "Response Get My Templates Api Templates My  Get"
+                  "title": "Response Get My Templates Api Templates My Get"
                 }
               }
             }
@@ -4856,13 +3684,13 @@
         }
       }
     },
-    "/api/templates/": {
+    "/api/templates": {
       "post": {
         "tags": [
           "templates"
         ],
         "summary": "Create Template",
-        "operationId": "create_template_api_templates__post",
+        "operationId": "create_template_api_templates_post",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -5168,101 +3996,6 @@
         }
       }
     },
-    "/api/reports/": {
-      "get": {
-        "tags": [
-          "reports"
-        ],
-        "summary": "Get My Reports",
-        "description": "Retrieve reports generated for the current tenant.",
-        "operationId": "get_my_reports_api_reports__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "title": "Offset"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GeneratedReportResponse"
-                  },
-                  "title": "Response Get My Reports Api Reports  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/reports": {
       "get": {
         "tags": [
@@ -5358,71 +4091,6 @@
         }
       }
     },
-    "/api/reports/analyze/": {
-      "post": {
-        "tags": [
-          "reports"
-        ],
-        "summary": "Analyze Document",
-        "description": "Analyze a document using a template and LLM.",
-        "operationId": "analyze_document_api_reports_analyze__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_analyze_document_api_reports_analyze__post"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GeneratedReportResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/reports/analyze": {
       "post": {
         "tags": [
@@ -5464,71 +4132,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GeneratedReportResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/reports/{report_id}/": {
-      "get": {
-        "tags": [
-          "reports"
-        ],
-        "summary": "Get Report",
-        "description": "Retrieve a specific report.",
-        "operationId": "get_report_api_reports__report_id___get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "report_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Report Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5601,75 +4204,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GeneratedReportResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/reports/{report_id}/versions/": {
-      "get": {
-        "tags": [
-          "reports"
-        ],
-        "summary": "Get Report Versions",
-        "description": "Retrieve all versions of a report.",
-        "operationId": "get_report_versions_api_reports__report_id__versions__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "report_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Report Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GeneratedReportResponse"
-                  },
-                  "title": "Response Get Report Versions Api Reports  Report Id  Versions  Get"
                 }
               }
             }
@@ -5847,160 +4381,6 @@
         }
       }
     },
-    "/api/notifications/": {
-      "get": {
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Get Notifications",
-        "description": "Retrieve notifications for the current user with status filters.",
-        "operationId": "get_notifications_api_notifications__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0,
-              "title": "Offset"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "Filter by status: all, read, unread",
-              "default": "all",
-              "title": "Status"
-            },
-            "description": "Filter by status: all, read, unread"
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationResponse"
-                  },
-                  "title": "Response Get Notifications Api Notifications  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/notifications/{notification_id}/read/": {
-      "post": {
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Mark Notification As Read",
-        "description": "Mark a specific notification as read.",
-        "operationId": "mark_notification_as_read_api_notifications__notification_id__read__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "notification_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Notification Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/notifications/{notification_id}/read": {
       "post": {
         "tags": [
@@ -6025,59 +4405,6 @@
               "title": "Notification Id"
             }
           },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/notifications/read-all/": {
-      "post": {
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Mark All Notifications As Read",
-        "description": "Mark all notifications as read for the current user.",
-        "operationId": "mark_all_notifications_as_read_api_notifications_read_all__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
           {
             "name": "X-Token",
             "in": "header",
@@ -6170,59 +4497,6 @@
         }
       }
     },
-    "/api/notifications/test-notify/": {
-      "post": {
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Create Test Notification",
-        "description": "Create a test notification for the current user.",
-        "operationId": "create_test_notification_api_notifications_test_notify__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/notifications/test-notify": {
       "post": {
         "tags": [
@@ -6237,69 +4511,6 @@
           }
         ],
         "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/notifications/{notification_id}/": {
-      "delete": {
-        "tags": [
-          "notifications"
-        ],
-        "summary": "Delete Notification",
-        "description": "Delete a notification.",
-        "operationId": "delete_notification_api_notifications__notification_id___delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "notification_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Notification Id"
-            }
-          },
           {
             "name": "X-Token",
             "in": "header",
@@ -7407,704 +5618,6 @@
         }
       }
     },
-    "/api/folders/": {
-      "get": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "List Folders",
-        "description": "List folders for the current tenant.",
-        "operationId": "list_folders_api_folders__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "parent_folder_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Parent Folder Id"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FolderResponse"
-                  },
-                  "title": "Response List Folders Api Folders  Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Create Folder",
-        "description": "Create a new folder.",
-        "operationId": "create_folder_api_folders__post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/folders": {
-      "get": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "List Folders",
-        "description": "List folders for the current tenant.",
-        "operationId": "list_folders_api_folders_get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "parent_folder_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Parent Folder Id"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FolderResponse"
-                  },
-                  "title": "Response List Folders Api Folders Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Create Folder",
-        "description": "Create a new folder.",
-        "operationId": "create_folder_api_folders_post",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/folders/{folder_id}/": {
-      "get": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Get Folder",
-        "description": "Retrieve a specific folder by ID.",
-        "operationId": "get_folder_api_folders__folder_id___get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Update Folder",
-        "description": "Update folder details.",
-        "operationId": "update_folder_api_folders__folder_id___patch",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Delete Folder",
-        "description": "Delete a folder. Folder must be empty.",
-        "operationId": "delete_folder_api_folders__folder_id___delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/folders/{folder_id}": {
-      "get": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Get Folder",
-        "description": "Retrieve a specific folder by ID.",
-        "operationId": "get_folder_api_folders__folder_id__get",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Update Folder",
-        "description": "Update folder details.",
-        "operationId": "update_folder_api_folders__folder_id__patch",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FolderUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FolderResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "folders"
-        ],
-        "summary": "Delete Folder",
-        "description": "Delete a folder. Folder must be empty.",
-        "operationId": "delete_folder_api_folders__folder_id__delete",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "folder_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Folder Id"
-            }
-          },
-          {
-            "name": "X-Token",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Token"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/integrations/google/auth-url": {
       "get": {
         "tags": [
@@ -8453,6 +5966,35 @@
           }
         }
       }
+    },
+    "/api/notifications/ws/{user_id}": {
+      "get": {
+        "summary": "Real-time Notifications WebSocket",
+        "description": "Connect to this WebSocket to receive real-time document processing updates, notifications, and status changes.",
+        "tags": [
+          "notifications"
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The UUID of the user to receive notifications for."
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols (WebSocket Handshake Success)"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8542,31 +6084,6 @@
         ],
         "title": "AuthUrlResponse"
       },
-      "Body_analyze_document_api_reports_analyze__post": {
-        "properties": {
-          "document_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Document Id"
-          },
-          "template_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Template Id"
-          },
-          "prompt": {
-            "type": "string",
-            "title": "Prompt",
-            "default": "Extract all fields including tables."
-          }
-        },
-        "type": "object",
-        "required": [
-          "document_id",
-          "template_id"
-        ],
-        "title": "Body_analyze_document_api_reports_analyze__post"
-      },
       "Body_analyze_document_api_reports_analyze_post": {
         "properties": {
           "document_id": {
@@ -8591,65 +6108,6 @@
           "template_id"
         ],
         "title": "Body_analyze_document_api_reports_analyze_post"
-      },
-      "Body_login_for_access_token_api_users_login__post": {
-        "properties": {
-          "grant_type": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^password$"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grant Type"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          },
-          "password": {
-            "type": "string",
-            "format": "password",
-            "title": "Password"
-          },
-          "scope": {
-            "type": "string",
-            "title": "Scope",
-            "default": ""
-          },
-          "client_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Id"
-          },
-          "client_secret": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "format": "password",
-            "title": "Client Secret"
-          }
-        },
-        "type": "object",
-        "required": [
-          "username",
-          "password"
-        ],
-        "title": "Body_login_for_access_token_api_users_login__post"
       },
       "Body_login_for_access_token_api_users_login_post": {
         "properties": {
@@ -8709,20 +6167,6 @@
           "password"
         ],
         "title": "Body_login_for_access_token_api_users_login_post"
-      },
-      "Body_upload_document_api_documents_upload__post": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_upload_document_api_documents_upload__post"
       },
       "Body_upload_document_api_documents_upload_post": {
         "properties": {
@@ -8982,6 +6426,18 @@
             "type": "array",
             "title": "Suggestions",
             "default": []
+          },
+          "chart_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chart Data"
           }
         },
         "type": "object",
@@ -9893,148 +7349,6 @@
         "title": "DocumentVersionResponse",
         "description": "Schema for document version information."
       },
-      "FolderCreate": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "parent_folder_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent Folder Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "FolderCreate"
-      },
-      "FolderResponse": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "parent_folder_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent Folder Id"
-          },
-          "folder_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Folder Id"
-          },
-          "tenant_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Tenant Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "created_on": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created On"
-          },
-          "updated_on": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated On"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "folder_id",
-          "tenant_id",
-          "user_id",
-          "created_on",
-          "updated_on"
-        ],
-        "title": "FolderResponse"
-      },
-      "FolderUpdate": {
-        "properties": {
-          "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "parent_folder_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent Folder Id"
-          }
-        },
-        "type": "object",
-        "title": "FolderUpdate"
-      },
       "GeneratedReportResponse": {
         "properties": {
           "report_id": {
@@ -10141,6 +7455,98 @@
           "content_markdown"
         ],
         "title": "GeneratedReportResponse"
+      },
+      "GoogleAuthRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email",
+            "description": "Google account email address",
+            "examples": [
+              "user@gmail.com"
+            ]
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name",
+            "description": "User's first name from Google profile",
+            "examples": [
+              "John"
+            ]
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name",
+            "description": "User's last name from Google profile",
+            "examples": [
+              "Doe"
+            ]
+          },
+          "google_id": {
+            "type": "string",
+            "title": "Google Id",
+            "description": "Google user ID",
+            "examples": [
+              "123456789012345678901"
+            ]
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url",
+            "description": "Profile image URL from Google",
+            "examples": [
+              "https://lh3.googleusercontent.com/photo.jpg"
+            ]
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id",
+            "description": "Optional tenant ID for joining existing tenant during first login",
+            "examples": [
+              "123e4567-e89b-12d3-a456-426614174000"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "google_id"
+        ],
+        "title": "GoogleAuthRequest",
+        "description": "Schema for Google OAuth authentication request."
       },
       "GoogleDocImportRequest": {
         "properties": {
@@ -11054,6 +8460,50 @@
         },
         "type": "object",
         "title": "RoleUpdate"
+      },
+      "StripeSyncRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id"
+        ],
+        "title": "StripeSyncRequest"
+      },
+      "StripeSyncResponse": {
+        "properties": {
+          "synced_plans": {
+            "type": "integer",
+            "title": "Synced Plans"
+          },
+          "created_products": {
+            "type": "integer",
+            "title": "Created Products"
+          },
+          "created_prices": {
+            "type": "integer",
+            "title": "Created Prices"
+          },
+          "details": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "synced_plans",
+          "created_products",
+          "created_prices",
+          "details"
+        ],
+        "title": "StripeSyncResponse"
       },
       "SubcategoryCreate": {
         "properties": {
@@ -12208,6 +9658,30 @@
             "examples": [
               "123e4567-e89b-12d3-a456-426614174001"
             ]
+          },
+          "tenant_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TenantTypeSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type of tenant to create (individual or enterprise)",
+            "default": "individual"
+          },
+          "org_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Org Name",
+            "description": "Organization name for enterprise tenants"
           }
         },
         "type": "object",
@@ -12217,6 +9691,29 @@
         ],
         "title": "UserCreate",
         "description": "Schema for creating a new user."
+      },
+      "UserRegisterResponse": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "access_token"
+        ],
+        "title": "UserRegisterResponse",
+        "description": "Response schema for registration including access token."
       },
       "UserResponse": {
         "properties": {
@@ -12509,15 +10006,139 @@
       }
     },
     "securitySchemes": {
-      "OAuth2PasswordBearer": {
-        "type": "oauth2",
-        "flows": {
-          "password": {
-            "scopes": {},
-            "tokenUrl": "api/users/token"
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer token authentication. Obtain a token by logging in via `/api/users/login`"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Authentication failed or token not provided",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "example": "Not authenticated"
+                }
+              }
+            },
+            "example": {
+              "detail": "Not authenticated"
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "Access denied - insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "example": "Insufficient permissions"
+                }
+              }
+            },
+            "example": {
+              "detail": "Insufficient permissions to access this resource"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "example": "Resource not found"
+                }
+              }
+            },
+            "example": {
+              "detail": "Document with ID '123' not found"
+            }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "example": "Rate limit exceeded"
+                },
+                "retry_after": {
+                  "type": "integer",
+                  "example": 60
+                }
+              }
+            },
+            "example": {
+              "detail": "Rate limit exceeded. Try again in 60 seconds.",
+              "retry_after": 60
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HTTPValidationError"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string",
+                  "example": "Internal Server Error"
+                }
+              }
+            },
+            "example": {
+              "detail": "Internal Server Error"
+            }
           }
         }
       }
     }
-  }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:8001",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.documentintelligence.com",
+      "description": "Production server"
+    }
+  ]
 }

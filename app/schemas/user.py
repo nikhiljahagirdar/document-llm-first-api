@@ -1,11 +1,14 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator, ConfigDict
 from uuid import UUID
 from typing import Optional, List
 from datetime import datetime
 from .role import RoleResponse
 
+from .enums import TenantTypeSchema
+
 class UserBase(BaseModel):
     """Base user schema with common fields."""
+    model_config = ConfigDict(populate_by_name=True)
     
     email: EmailStr = Field(
         ..., 
@@ -51,7 +54,26 @@ class UserCreate(UserBase):
         description="Optional role ID within the tenant",
         examples=["123e4567-e89b-12d3-a456-426614174001"]
     )
+    tenant_type: Optional[TenantTypeSchema] = Field(
+        TenantTypeSchema.INDIVIDUAL,
+        description="Type of tenant to create (individual or enterprise)"
+    )
+    org_name: Optional[str] = Field(
+        None,
+        description="Organization name for enterprise tenants"
+    )
     
+    @field_validator("tenant_type", mode="before")
+    @classmethod
+    def validate_tenant_type(cls, v):
+        if isinstance(v, str):
+            v_lower = v.lower()
+            if v_lower == "individual":
+                return TenantTypeSchema.INDIVIDUAL
+            if v_lower == "enterprise":
+                return TenantTypeSchema.ENTERPRISE
+        return v
+
     @model_validator(mode='after')
     def validate_password(self):
         """Validate password strength."""
@@ -170,11 +192,21 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+class UserRegisterResponse(BaseModel):
+    """Response schema for registration including access token."""
+    user: UserResponse
+    access_token: str
+    token_type: str = "bearer"
+
 class GoogleAuthRequest(BaseModel):
     """Schema for Google OAuth authentication request."""
     
-    email: EmailStr = Field(
-        ..., 
+    code: Optional[str] = Field(
+        None,
+        description="Google OAuth authorization code (for server-side token exchange)"
+    )
+    email: Optional[EmailStr] = Field(
+        None, 
         description="Google account email address",
         examples=["user@gmail.com"]
     )
@@ -190,8 +222,8 @@ class GoogleAuthRequest(BaseModel):
         description="User's last name from Google profile",
         examples=["Doe"]
     )
-    google_id: str = Field(
-        ..., 
+    google_id: Optional[str] = Field(
+        None, 
         description="Google user ID",
         examples=["123456789012345678901"]
     )

@@ -385,37 +385,13 @@ async def process_document(file_path: str, file_extension: str, tenant_id: uuid.
                 "page_count": 1, "file_type": file_type, "metadata": metadata
             }
 
-        # 2. Fast-path for native PDFs with selectable text
+        # 2. Extract metadata and page count for PDFs using PyMuPDF
         if ext == ".pdf":
             try:
                 doc = fitz.open(file_path)
                 page_count = doc.page_count
                 metadata = doc.metadata
-                
-                total_text = ""
-                html_pages = {}
-                for i, page in enumerate(doc):
-                    text = page.get_text()
-                    total_text += text
-                    html_pages[i + 1] = page.get_text("html")
                 doc.close()
-
-                # If enough text is found, return immediately without heavy OCR
-                if len(total_text.strip()) > 100:
-                    print(f"INFO: Native PDF text detected ({len(total_text)} chars). Using PyMuPDF.")
-                    return {
-                        "text": total_text,
-                        "plain_text": total_text,
-                        "html": html_pages,
-                        "rich_content": {}, 
-                        "source": "pymupdf-native",
-                        "format": "text",
-                        "page_count": page_count,
-                        "file_type": file_type,
-                        "metadata": metadata
-                    }
-                else:
-                    print("INFO: Scanned PDF detected or minimal text. Using Docling for OCR...")
             except Exception as e:
                 print(f"PyMuPDF pre-check failed: {e}. Proceeding with Docling.")
 

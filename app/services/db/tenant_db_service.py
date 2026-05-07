@@ -78,7 +78,7 @@ class TenantDBService(BaseDBService):
         res = await self.fetch_one(
             conn, 
             "SELECT COUNT(*) as count FROM documents WHERE tenant_id::uuid = %s::uuid AND status = %s", 
-            (tenant_id, "processed")
+            (tenant_id, "completed")
         )
         total_processed = res["count"] if res else 0
 
@@ -99,8 +99,8 @@ class TenantDBService(BaseDBService):
             JOIN document_statuses p ON e.document_id = p.document_id
             JOIN documents d ON e.document_id = d.document_id
             WHERE d.tenant_id::uuid = %s::uuid 
-              AND e.status = 'extracting' 
-              AND p.status = 'processed'
+              AND e.status = 'processing' 
+              AND p.status = 'completed'
         """
         res = await self.fetch_one(conn, latency_query, (tenant_id,))
         avg_latency = float(res["avg_latency"]) if res and res["avg_latency"] else 1.25 # Default 1.25s if no data

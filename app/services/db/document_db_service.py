@@ -80,14 +80,14 @@ class DocumentDBService(BaseDBService):
         doc = await self.execute_returning(
             conn,
             query,
-            (doc_id, tenant_id, user_id, filename, "", "processed", len(content), folder_id, industry_id, category_id, subcategory_id, now, now),
+            (doc_id, tenant_id, user_id, filename, "", "completed", len(content), folder_id, industry_id, category_id, subcategory_id, now, now),
         )
         
         # Save initial version
         await self.save_document_version(conn, doc_id, 1, content, None, user_id)
         
         await self.update_document_statuses(
-            conn, doc_id, "processed", "Created manually", user_id
+            conn, doc_id, "completed", "Created manually", user_id
         )
         return doc
 

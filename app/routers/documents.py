@@ -180,7 +180,7 @@ async def process_document_background(
                         raise FileNotFoundError(f"Could not find local file or S3 object for document {document_id}")
 
                 await service.update_document_statuses(
-                    conn, document_id, "extracting", f"Extracting text from {document['filename']}...", user_id
+                    conn, document_id, "processing", f"Extracting text from {document['filename']}...", user_id
                 )
 
             # 2. LONG RUNNING EXTRACTION (Release DB connection)
@@ -235,7 +235,7 @@ async def process_document_background(
             # 3. CATEGORIZATION & INDUSTRY DETECTION
             async with get_connection() as conn:
                 await service.update_document_statuses(
-                    conn, document_id, "categorizing", f"Categorizing {document['filename']}...", user_id
+                    conn, document_id, "processing", f"Categorizing {document['filename']}...", user_id
                 )
 
                 industries = await ind_service.list_industries(conn)
@@ -264,7 +264,7 @@ async def process_document_background(
 
             # 4. RAG INGESTION
             async with get_connection() as conn:
-                await service.update_document_statuses(conn, document_id, "processed", "Success", user_id)
+                await service.update_document_statuses(conn, document_id, "completed", "Success", user_id)
                 
                 # Await RAG indexing to ensure file is available
                 await RAGService.ingest_document(None, document_id, tenant_id, extracted_text, file_path=local_file_path)

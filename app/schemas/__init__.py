@@ -6,6 +6,7 @@ from .user import (
     UserCreate as UserCreate,
     UserResponse as UserResponse,
     UserUpdate as UserUpdate,
+    UserRegisterResponse as UserRegisterResponse,
 )
 from .billing import (
     CheckoutSessionRequest as CheckoutSessionRequest,

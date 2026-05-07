@@ -124,7 +124,7 @@ class MeteringDBService(BaseDBService):
         avg_latency = 0.0
         if is_superadmin:
             # Global Extraction Rate
-            res_proc = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents WHERE status = 'processed'")
+            res_proc = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents WHERE status = 'completed'")
             total_processed = res_proc["count"] if res_proc else 0
             res_total = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents")
             all_docs = res_total["count"] if res_total else 0
@@ -135,13 +135,13 @@ class MeteringDBService(BaseDBService):
                 SELECT AVG(EXTRACT(EPOCH FROM (p.created_on - e.created_on))) as avg_latency
                 FROM document_statuses e
                 JOIN document_statuses p ON e.document_id = p.document_id
-                WHERE e.status = 'extracting' AND p.status = 'processed'
+                WHERE e.status = 'processing' AND p.status = 'completed'
             """
             res_lat = await self.fetch_one(conn, latency_query)
             avg_latency = float(res_lat["avg_latency"]) if res_lat and res_lat.get("avg_latency") else 1.25
         else:
             # Tenant Extraction Rate
-            res_proc = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents WHERE tenant_id::uuid = %s::uuid AND status = 'processed'", (tenant_id,))
+            res_proc = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents WHERE tenant_id::uuid = %s::uuid AND status = 'completed'", (tenant_id,))
             total_processed = res_proc["count"] if res_proc else 0
             res_total = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents WHERE tenant_id::uuid = %s::uuid", (tenant_id,))
             all_docs = res_total["count"] if res_total else 0
@@ -153,7 +153,7 @@ class MeteringDBService(BaseDBService):
                 FROM document_statuses e
                 JOIN document_statuses p ON e.document_id = p.document_id
                 JOIN documents d ON e.document_id = d.document_id
-                WHERE d.tenant_id::uuid = %s::uuid AND e.status = 'extracting' AND p.status = 'processed'
+                WHERE d.tenant_id::uuid = %s::uuid AND e.status = 'processing' AND p.status = 'completed'
             """
             res_lat = await self.fetch_one(conn, latency_query, (tenant_id,))
             avg_latency = float(res_lat["avg_latency"]) if res_lat and res_lat.get("avg_latency") else 1.25
