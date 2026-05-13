@@ -6,7 +6,7 @@ import json
 import asyncio
 import httpx
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Any, Optional
 
 from fastapi import (
@@ -17,11 +17,12 @@ from fastapi import (
     HTTPException,
     BackgroundTasks,
     status,
+    Body,
+    Request,
 )
-import psycopg
-from psycopg_pool import PoolClosed
+from pydantic import BaseModel, Field
 
-from app.db_raw import get_raw_db, get_connection, DBWrapper
+from app.db_raw import get_raw_db, get_connection
 from app.dependencies import get_current_user, get_current_tenant
 from app.schemas import (
     DocumentResponse,
@@ -33,20 +34,16 @@ from app.schemas import (
     DocumentCreateFromTemplate,
     GoogleDocImportRequest,
 )
-from app.services.storage_service import upload_to_s3, get_file_from_s3, get_s3_key_from_url, generate_presigned_url
-from app.services.document_processing import (
-    process_document, generate_page_previews
-)
-from app.services.embedding_service import get_text_embedding
-from app.services.rag_service import RAGService
-from app.services.llm_service import LLMService
+from app.services.storage_service import upload_to_s3, get_s3_key_from_url, generate_presigned_url
 from app.services.notification_service import NotificationService
+from app.services.document_workflow_service import DocumentWorkflowService, bg_log
 from app.services.db.document_db_service import DocumentDBService
 from app.services.db.template_db_service import TemplateDBService
 from app.services.db.industry_db_service import IndustryDBService
 from app.services.db.audit_log_db_service import AuditLogDBService
 from app.services.db.metering_db_service import MeteringDBService
 from app.config import settings
+import asyncpg
 
 router = APIRouter(prefix="/documents", tags=["Documents Management"])
 
@@ -60,9 +57,24 @@ async def run_async_notif(user_id: uuid.UUID, title: str, message: str, type: st
 def prepare_document_response(d: dict) -> dict:
     if not d: return {}
     
+    # Ensure metadata is a dictionary
+    metadata = d.get("metadata") or {}
+    
+    # Handle potentially nested JSON strings from database drivers
+    max_attempts = 3
+    while isinstance(metadata, str) and max_attempts > 0:
+        try:
+            metadata = json.loads(metadata)
+        except Exception:
+            metadata = {}
+            break
+        max_attempts -= 1
+        
+    if not isinstance(metadata, dict):
+        metadata = {}
+    
     # Generate a presigned URL for the main file if it's an S3 URL
     file_url = d["file_url"]
-    metadata = d.get("metadata") or {}
     thumbnail_url = metadata.get("thumbnail_url")
     
     if thumbnail_url and "amazonaws.com" in thumbnail_url:
@@ -125,176 +137,6 @@ async def get_industry_service():
 async def get_metering_service():
     return MeteringDBService()
 
-processing_semaphore = asyncio.Semaphore(1)
-
-def bg_log(msg):
-    from datetime import datetime
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("bg_worker.log", "a", encoding="utf-8") as f:
-        f.write(f"[{timestamp}] {msg}\n")
-
-async def process_document_background(
-    document_id: uuid.UUID, tenant_id: uuid.UUID, user_id: uuid.UUID, original_file_path: str, file_extension: str
-):
-    """
-    Background worker for document processing.
-    Handles: Download, Extraction (Docling/Gemini), Categorization, Versioning, and RAG Ingestion.
-    """
-    from app.services.llm_service import LLMService
-    service = DocumentDBService()
-    ind_service = IndustryDBService()
-    metering = MeteringDBService()
-    
-    # Task 2: Create a temp directory tenantid-documentid
-    temp_dir = os.path.join(UPLOAD_DIR, f"temp-{tenant_id}-{document_id}")
-    os.makedirs(temp_dir, exist_ok=True)
-    
-    # Move or copy the file to the temp directory for processing
-    local_file_path = os.path.join(temp_dir, os.path.basename(original_file_path))
-    if os.path.exists(original_file_path):
-        shutil.copy2(original_file_path, local_file_path)
-    
-    async with processing_semaphore:
-        bg_log(f"DEBUG: Starting background processing for document {document_id}")
-        try:
-            # 1. INITIAL FETCH & STATUS UPDATE
-            async with get_connection() as conn:
-                # CHECK OCR LIMIT
-                await metering.check_usage_limits(conn, tenant_id, "ocr")
-                
-                document = await service.get_document(conn, document_id, tenant_id, is_admin=True)
-                if not document:
-                    bg_log(f"ERROR: Document {document_id} not found in DB for tenant {tenant_id}")
-                    return
-
-                # Ensure local file exists, download from S3 if missing
-                if not os.path.exists(local_file_path):
-                    bg_log(f"INFO: Local file missing at {local_file_path}, attempting download from S3")
-                    s3_key = get_s3_key_from_url(document["file_url"])
-                    file_bytes = await get_file_from_s3(s3_key)
-                    if file_bytes:
-                        with open(local_file_path, "wb") as f:
-                            f.write(file_bytes)
-                        bg_log(f"INFO: Successfully downloaded {document['filename']} to {local_file_path}")
-                    else:
-                        raise FileNotFoundError(f"Could not find local file or S3 object for document {document_id}")
-
-                await service.update_document_statuses(
-                    conn, document_id, "processing", f"Extracting text from {document['filename']}...", user_id
-                )
-
-            # 2. LONG RUNNING EXTRACTION (Release DB connection)
-            bg_log(f"DEBUG: Calling process_document for {document_id}")
-            
-            # Start parallel preview generation (Thumbnail)
-            preview_task = asyncio.create_task(generate_page_previews(local_file_path, tenant_id, document_id))
-            
-            processing_result = await process_document(local_file_path, file_extension, tenant_id=tenant_id, document_id=document_id)
-            extracted_text = processing_result.get("text", "")
-            rich_content = processing_result.get("rich_content") or {}
-            
-            # Wait for thumbnail
-            thumbnail_url = await preview_task
-            doc_metadata = processing_result.get("metadata") or {}
-            if thumbnail_url:
-                doc_metadata["thumbnail_url"] = thumbnail_url
-                processing_result["metadata"] = doc_metadata
-            
-            bg_log(f"DEBUG: Extraction complete for {document_id}. Source: {processing_result.get('source')}")
-
-            if not extracted_text:
-                bg_log(f"DEBUG: Extraction failed for {document_id}")
-                async with get_connection() as conn:
-                    await service.update_document_statuses(
-                        conn, document_id, "failed", "No text could be extracted", user_id
-                    )
-                return
-            
-            # Persist metadata
-            async with get_connection() as conn:
-                page_count = processing_result.get("page_count", 1)
-                await service.update_document_metadata(
-                    conn, 
-                    document_id, 
-                    processing_result.get("file_type", file_extension.lstrip('.')), 
-                    page_count, 
-                    processing_result.get("metadata", {})
-                )
-                # Log OCR Usage
-                await LLMService.log_llm_usage(
-                    conn, tenant_id, "OCR Usage (Pages)", page_count, user_id=user_id
-                )
-                
-                # Save OCR result for auditing/dashboard
-                await service.execute(
-                    conn,
-                    "INSERT INTO ocr_results (ocr_id, document_id, extracted_text, status) VALUES (%s::uuid, %s::uuid, %s, %s)",
-                    (str(uuid.uuid4()), document_id, json.dumps({"text": extracted_text, "source": processing_result.get("source")}), "completed")
-                )
-
-            # 3. CATEGORIZATION & INDUSTRY DETECTION
-            async with get_connection() as conn:
-                await service.update_document_statuses(
-                    conn, document_id, "processing", f"Categorizing {document['filename']}...", user_id
-                )
-
-                industries = await ind_service.list_industries(conn)
-                detection = await LLMService.detect_industry(extracted_text, industries, tenant_id, conn, user_id=user_id)
-
-                if detection and "error" not in detection:
-                    await service.execute(
-                        conn,
-                        "UPDATE documents SET industry_id = %s::uuid, category_id = %s::uuid, subcategory_id = %s::uuid WHERE document_id::uuid = %s::uuid",
-                        (detection.get("industry_id"), detection.get("category_id"), detection.get("subcategory_id"), document_id)
-                    )
-
-                # Task: Generate Global Document Embedding
-                global_embedding = await get_text_embedding(processing_result.get("plain_text") or extracted_text)
-
-                await service.save_document_version(
-                    conn, 
-                    document_id, 
-                    1, 
-                    processing_result.get("plain_text") or extracted_text, 
-                    json.dumps(rich_content), 
-                    user_id, 
-                    json.dumps(processing_result.get("html")),
-                    embedding=global_embedding
-                )
-
-            # 4. RAG INGESTION
-            async with get_connection() as conn:
-                await service.update_document_statuses(conn, document_id, "completed", "Success", user_id)
-                
-                # Await RAG indexing to ensure file is available
-                await RAGService.ingest_document(None, document_id, tenant_id, extracted_text, file_path=local_file_path)
-                
-                # Record Audit Log for final processing success
-                await AuditLogDBService.record_audit_log(
-                    conn, tenant_id, user_id,
-                    "document_processed", "document", str(document_id),
-                    {"filename": document['filename'], "status": "success"}
-                )
-
-        except Exception as e:
-            bg_log(f"ERROR: {document_id} failed: {e}")
-            try:
-                async with get_connection() as conn:
-                    await service.update_document_statuses(conn, document_id, "failed", str(e), user_id)
-                    # Record Audit Log for failure
-                    await AuditLogDBService.record_audit_log(
-                        conn, tenant_id, user_id,
-                        "document_processing_failed", "document", str(document_id),
-                        {"error": str(e)}
-                    )
-            except: pass
-        finally:
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
-            if os.path.exists(original_file_path):
-                os.remove(original_file_path)
-
-
 @router.post("/upload", response_model=DocumentResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_document(
     background_tasks: BackgroundTasks,
@@ -302,7 +144,7 @@ async def upload_document(
     folder_id: Optional[uuid.UUID] = None,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service),
     metering: MeteringDBService = Depends(get_metering_service)
 ):
@@ -316,14 +158,15 @@ async def upload_document(
     - **Returns:** 202 Accepted with document metadata. Check WebSocket or status endpoint for updates.
     """
     # CHECK STORAGE LIMIT
-    await metering.check_usage_limits(conn, tenant.tenant_id, "storage")
+    is_valid = await metering.check_usage_limits(conn, tenant.tenant_id, "storage")
+    if is_valid is False:
+        raise HTTPException(
+            status_code=403, 
+            detail="Storage limit exceeded. Please upgrade your plan."
+        )
 
     # Task 4: Check if file exists tell user that file already uploaded
-    existing = await DBWrapper.fetch_one(
-        conn, 
-        "SELECT document_id FROM documents WHERE tenant_id = %s::uuid AND filename = %s AND is_active = TRUE",
-        (tenant.tenant_id, file.filename)
-    )
+    existing = await service.check_document_exists(conn, tenant.tenant_id, file.filename)
     if existing:
         raise HTTPException(
             status_code=400, 
@@ -339,7 +182,11 @@ async def upload_document(
             shutil.copyfileobj(file.file, buffer)
 
         try:
-            s3_url = await upload_to_s3(local_path, f"tenant-{tenant.tenant_id}/documents/{doc_id}{ext}")
+            s3_url = await upload_to_s3(
+                local_path, 
+                f"tenant-{tenant.tenant_id}/documents/{doc_id}{ext}",
+                content_type=file.content_type or "application/octet-stream"
+            )
             
             doc = await service.create_document(
                 conn, doc_id, tenant.tenant_id, current_user.user_id, file.filename, s3_url, os.path.getsize(local_path), folder_id
@@ -352,7 +199,7 @@ async def upload_document(
                 {"filename": file.filename}
             )
 
-            background_tasks.add_task(process_document_background, doc_id, tenant.tenant_id, current_user.user_id, local_path, ext)
+            background_tasks.add_task(DocumentWorkflowService.process_document_background, doc_id, tenant.tenant_id, current_user.user_id, local_path, ext)
             return prepare_document_response(doc)
         except Exception as e:
             if os.path.exists(local_path): os.remove(local_path)
@@ -360,7 +207,6 @@ async def upload_document(
             if "unique constraint" in err_msg.lower() or "uq_doc_tenant_filename" in err_msg:
                  raise HTTPException(status_code=400, detail=f"A document with filename '{file.filename}' already exists for this tenant.")
             
-            bg_log(f"ERROR: Upload failed for {file.filename}: {err_msg}")
             raise HTTPException(status_code=500, detail=f"Upload failed: {err_msg}")
     except HTTPException:
         raise
@@ -373,7 +219,7 @@ async def create_document_manual(
     payload: DocumentCreateManual,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -408,7 +254,7 @@ async def create_document_from_template(
     payload: DocumentCreateFromTemplate,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service),
     tpl_service: TemplateDBService = Depends(get_template_service)
 ):
@@ -456,7 +302,7 @@ async def import_google_doc(
     background_tasks: BackgroundTasks,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service),
     metering: MeteringDBService = Depends(get_metering_service)
 ):
@@ -466,7 +312,12 @@ async def import_google_doc(
     Downloads a Google Doc as a PDF and processes it.
     If the document is private, it uses the user's authorized Google Drive credentials.
     """
-    await metering.check_usage_limits(conn, tenant.tenant_id, "storage")
+    is_valid = await metering.check_usage_limits(conn, tenant.tenant_id, "storage")
+    if is_valid is False:
+        raise HTTPException(
+            status_code=403, 
+            detail="Storage limit exceeded. Please upgrade your plan."
+        )
 
     # Extract Document ID from URL
     match = re.search(r"/document/d/([a-zA-Z0-9-_]+)", payload.url)
@@ -476,8 +327,7 @@ async def import_google_doc(
     gdoc_id = match.group(1)
     
     # 1. Check for authorized credentials
-    query = "SELECT access_token, refresh_token, expires_at FROM user_credentials WHERE user_id = %s AND provider = 'google'"
-    creds = await DBWrapper.fetch_one(conn, query, (current_user.user_id,))
+    creds = await service.get_google_credentials(conn, current_user.user_id)
     
     access_token = None
     if creds:
@@ -498,11 +348,7 @@ async def import_google_doc(
                     new_data = refresh_res.json()
                     access_token = new_data["access_token"]
                     expires_at = datetime.now() + timedelta(seconds=new_data.get("expires_in", 3600))
-                    await DBWrapper.execute(
-                        conn, 
-                        "UPDATE user_credentials SET access_token = %s, expires_at = %s WHERE user_id = %s AND provider = 'google'",
-                        (access_token, expires_at, current_user.user_id)
-                    )
+                    await service.update_google_credentials(conn, current_user.user_id, access_token, expires_at)
 
     # 2. Prepare export
     # For Google Docs, we export as PDF for high-quality extraction
@@ -550,13 +396,12 @@ async def import_google_doc(
             {"url": payload.url, "filename": filename, "private": bool(access_token)}
         )
 
-        background_tasks.add_task(process_document_background, doc_id, tenant.tenant_id, current_user.user_id, local_path, ".pdf")
+        background_tasks.add_task(DocumentWorkflowService.process_document_background, doc_id, tenant.tenant_id, current_user.user_id, local_path, ".pdf")
         return prepare_document_response(doc)
     except HTTPException:
         raise
     except Exception as e:
         if os.path.exists(local_path): os.remove(local_path)
-        bg_log(f"ERROR: Google Doc import failed: {e}")
         raise HTTPException(status_code=500, detail=f"Google Doc import failed: {e}")
 
 @router.get("/{document_id}", response_model=DocumentResponse)
@@ -564,7 +409,7 @@ async def get_document(
     document_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -592,7 +437,7 @@ async def get_documents(
     offset: int = 0,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -615,7 +460,7 @@ async def get_document_content(
     page_size: int = 10000,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -726,7 +571,7 @@ async def update_document_content(
     content_update: DocumentContentUpdate,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -756,17 +601,28 @@ async def update_document_content(
         {"version_number": next_version_num}
     )
 
+    # Invalidate RAG Cache
+    if settings.USE_REDIS:
+        try:
+            from fastapi_cache import FastAPICache
+            backend = FastAPICache.get_backend()
+            if backend and hasattr(backend, "delete"):
+                await backend.delete(f"doc_versions_{document_id}")
+        except Exception as e:
+            print(f"WARNING: Failed to clear document cache: {e}")
+
     # Return the newly created version
     new_versions = await service.get_versions(conn, document_id)
     return new_versions[0]
 
 @router.post("/{document_id}/reprocess", status_code=status.HTTP_202_ACCEPTED)
 async def reprocess_document(
+    req: Request,
     document_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -775,6 +631,16 @@ async def reprocess_document(
     Manually triggers the AI background pipeline for an existing document. 
     Useful if extraction failed or if you want to apply updated AI models.
     """
+    # Extensive logging for debugging HTTP 415s and Media Types
+    raw_body = await req.body()
+    print("\n" + "="*60)
+    print(f"🔄 REPROCESS API HIT: {document_id}")
+    print(f"🌐 URL: {req.url}")
+    print(f"📋 Content-Type: {req.headers.get('content-type', 'None Provided')}")
+    print(f"📦 Raw Headers: {dict(req.headers)}")
+    print(f"📄 Raw Body: {raw_body}")
+    print("="*60 + "\n")
+
     document = await service.get_document(conn, document_id, tenant.tenant_id, current_user.user_id, True)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -792,7 +658,7 @@ async def reprocess_document(
     local_filename = document["file_url"].split("/")[-1]
     local_path = os.path.join(UPLOAD_DIR, local_filename)
     ext = os.path.splitext(document["filename"])[1].lower()
-    background_tasks.add_task(process_document_background, document_id, tenant.tenant_id, current_user.user_id, local_path, ext)
+    background_tasks.add_task(DocumentWorkflowService.process_document_background, document_id, tenant.tenant_id, current_user.user_id, local_path, ext)
     return {"status": "processing"}
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -800,7 +666,7 @@ async def delete_document(
     document_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: DocumentDBService = Depends(get_document_service)
 ):
     """
@@ -901,7 +767,7 @@ async def process_google_import_background(
                         )
 
                 # Trigger processing
-                await process_document_background(doc_id, tenant_id, user_id, local_path, ".pdf")
+                await DocumentWorkflowService.process_document_background(doc_id, tenant_id, user_id, local_path, ".pdf")
             else:
                 bg_log(f"SYNC ERROR: Failed to download {filename}: {response.text}")
                 
@@ -929,9 +795,9 @@ async def retry_failed_documents():
                     local_path = os.path.join(UPLOAD_DIR, local_filename)
                     
                     asyncio.create_task(
-                        process_document_background(doc_id, doc["tenant_id"], doc["user_id"], local_path, ext)
+                        DocumentWorkflowService.process_document_background(doc_id, doc["tenant_id"], doc["user_id"], local_path, ext)
                     )
-        except PoolClosed:
+        except asyncpg.PoolClosedError:
             bg_log("INFO: DB Pool closed, stopping retry_failed_documents loop.")
             break
         except asyncio.CancelledError:

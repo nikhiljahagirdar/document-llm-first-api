@@ -11,7 +11,7 @@ def pytest_sessionstart(session):
 @pytest.fixture(scope="session")
 def event_loop():
     """
-    Force SelectorEventLoop on Windows for Psycopg3 compatibility.
+    Force SelectorEventLoop on Windows for asyncpg compatibility.
     """
     if sys.platform == 'win32':
         loop = asyncio.SelectorEventLoop(selectors.SelectSelector())

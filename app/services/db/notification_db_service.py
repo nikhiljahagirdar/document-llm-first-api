@@ -1,13 +1,13 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional
-import psycopg
+import asyncpg
 from app.services.db.base_db_service import BaseDBService
 
 class NotificationDBService(BaseDBService):
     async def list_notifications(
         self, 
-        conn: psycopg.AsyncConnection, 
+        conn: asyncpg.Connection, 
         user_id: uuid.UUID, 
         limit: int = 50, 
         offset: int = 0, 
@@ -29,16 +29,16 @@ class NotificationDBService(BaseDBService):
         params.extend([limit, offset])
         return await self.fetch_all(conn, query, tuple(params))
 
-    async def mark_as_read(self, conn: psycopg.AsyncConnection, notification_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    async def mark_as_read(self, conn: asyncpg.Connection, notification_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         query = "UPDATE notifications SET is_read = TRUE, updated_on = NOW() WHERE notification_id::uuid = %s::uuid AND user_id::uuid = %s::uuid AND is_active = TRUE RETURNING 1"
         result = await self.fetch_one(conn, query, (notification_id, user_id))
         return result is not None
 
-    async def mark_all_as_read(self, conn: psycopg.AsyncConnection, user_id: uuid.UUID):
+    async def mark_all_as_read(self, conn: asyncpg.Connection, user_id: uuid.UUID):
         query = "UPDATE notifications SET is_read = TRUE, updated_on = NOW() WHERE user_id::uuid = %s::uuid AND is_read = FALSE AND is_active = TRUE"
         await self.execute(conn, query, (user_id,))
 
-    async def create_notification(self, conn: psycopg.AsyncConnection, user_id: uuid.UUID, title: str, message: str, type: str = "info") -> dict:
+    async def create_notification(self, conn: asyncpg.Connection, user_id: uuid.UUID, title: str, message: str, type: str = "info") -> dict:
         query = """
             INSERT INTO notifications (notification_id, user_id, title, message, type, is_read, is_active, created_on, updated_on)
             VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s)
@@ -48,7 +48,7 @@ class NotificationDBService(BaseDBService):
         now = datetime.now()
         return await self.execute_returning(conn, query, (new_id, user_id, title, message, type, False, True, now, now))
 
-    async def delete_notification(self, conn: psycopg.AsyncConnection, notification_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    async def delete_notification(self, conn: asyncpg.Connection, notification_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         query = "UPDATE notifications SET is_active = FALSE, updated_on = NOW() WHERE notification_id::uuid = %s::uuid AND user_id::uuid = %s::uuid RETURNING 1"
         result = await self.fetch_one(conn, query, (notification_id, user_id))
         return result is not None

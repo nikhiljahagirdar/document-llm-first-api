@@ -1,24 +1,24 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List
-import psycopg
+import asyncpg
 from .base_db_service import BaseDBService
 
 import json
 
 class TenantDBService(BaseDBService):
-    async def get_tenant_by_id(self, conn: psycopg.AsyncConnection, tenant_id: str) -> Optional[dict]:
+    async def get_tenant_by_id(self, conn: asyncpg.Connection, tenant_id: str) -> Optional[dict]:
         query = "SELECT * FROM tenants WHERE tenant_id::uuid = %s::uuid"
         return await self.fetch_one(conn, query, (tenant_id,))
 
-    async def get_tenant_by_slug(self, conn: psycopg.AsyncConnection, slug: str) -> Optional[dict]:
+    async def get_tenant_by_slug(self, conn: asyncpg.Connection, slug: str) -> Optional[dict]:
         query = "SELECT * FROM tenants WHERE slug = %s"
         return await self.fetch_one(conn, query, (slug,))
 
-    async def get_all_tenants(self, conn: psycopg.AsyncConnection) -> List[dict]:
+    async def get_all_tenants(self, conn: asyncpg.Connection) -> List[dict]:
         return await self.fetch_all(conn, "SELECT * FROM tenants")
 
-    async def create_tenant(self, conn: psycopg.AsyncConnection, tenant_data: dict) -> dict:
+    async def create_tenant(self, conn: asyncpg.Connection, tenant_data: dict) -> dict:
         fields = list(tenant_data.keys())
         placeholders = ["%s" for _ in fields]
         
@@ -39,7 +39,7 @@ class TenantDBService(BaseDBService):
         """
         return await self.execute_returning(conn, query, tuple(tenant_data.values()))
 
-    async def initialize_tenant_settings(self, conn: psycopg.AsyncConnection, tenant_id: str, config: dict = None) -> None:
+    async def initialize_tenant_settings(self, conn: asyncpg.Connection, tenant_id: str, config: dict = None) -> None:
         if config is None:
             config = {}
         await self.execute(
@@ -48,11 +48,11 @@ class TenantDBService(BaseDBService):
             (str(uuid.uuid4()), tenant_id, json.dumps(config))
         )
 
-    async def get_tenant_settings(self, conn: psycopg.AsyncConnection, tenant_id: str) -> Optional[dict]:
+    async def get_tenant_settings(self, conn: asyncpg.Connection, tenant_id: str) -> Optional[dict]:
         settings = await self.fetch_one(conn, "SELECT config FROM tenant_settings WHERE tenant_id = %s::uuid", (tenant_id,))
         return settings["config"] if settings else None
 
-    async def update_tenant_settings(self, conn: psycopg.AsyncConnection, tenant_id: str, config: dict) -> bool:
+    async def update_tenant_settings(self, conn: asyncpg.Connection, tenant_id: str, config: dict) -> bool:
         # Check if settings exist
         settings = await self.fetch_one(conn, "SELECT 1 FROM tenant_settings WHERE tenant_id = %s::uuid", (tenant_id,))
         if not settings:
@@ -65,7 +65,7 @@ class TenantDBService(BaseDBService):
         )
         return True
 
-    async def get_tenant_dashboard_metrics(self, conn: psycopg.AsyncConnection, tenant_id: str) -> dict:
+    async def get_tenant_dashboard_metrics(self, conn: asyncpg.Connection, tenant_id: str) -> dict:
         # 1. Total Documents
         res = await self.fetch_one(conn, "SELECT COUNT(*) as count FROM documents WHERE tenant_id::uuid = %s::uuid", (tenant_id,))
         total_docs = res["count"] if res else 0

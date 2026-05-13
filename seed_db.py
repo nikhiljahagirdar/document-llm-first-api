@@ -1,4 +1,5 @@
-import psycopg
+import asyncio
+import asyncpg
 import uuid
 import json
 from datetime import datetime
@@ -6,32 +7,33 @@ import stripe
 from faker import Faker
 from app.security import get_password_hash
 import os
+import sys
 from dotenv import load_dotenv
 
 fake = Faker()
 load_dotenv()
 
-def clear_database(cur):
+async def clear_database(conn):
     print("Clearing all data from all tables...")
-    cur.execute("""
+    rows = await conn.fetch("""
         SELECT tablename 
         FROM pg_catalog.pg_tables 
         WHERE schemaname = 'public'
     """)
-    tables = cur.fetchall()
+    tables = [row['tablename'] for row in rows]
     
     if not tables:
         print("No tables found to clear.")
         return
-
+ 
     # Filter out spatial_ref_sys if it exists (it's part of PostGIS/Vector)
-    table_list = ", ".join([f'"{t[0]}"' for t in tables if t[0] != 'spatial_ref_sys'])
+    table_list = ", ".join([f'"{t}"' for t in tables if t != 'spatial_ref_sys'])
     print(f"Truncating tables: {table_list}")
     
-    cur.execute(f"TRUNCATE TABLE {table_list} RESTART IDENTITY CASCADE;")
+    await conn.execute(f"TRUNCATE TABLE {table_list} RESTART IDENTITY CASCADE;")
     print("Database cleared.")
 
-def seed_database():
+async def seed_database():
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
         print("DATABASE_URL not found in .env")
@@ -41,13 +43,11 @@ def seed_database():
     if not stripe.api_key:
         print("\nWARNING: STRIPE_SECRET_KEY not found in .env. Skipping Stripe plan synchronization.")
 
-    
-    conn = psycopg.connect(db_url)
-    cur = conn.cursor()
+    conn = await asyncpg.connect(db_url)
     
     try:
         # 1. Clear everything
-        clear_database(cur)
+        await clear_database(conn)
         
         now = datetime.now()
 
@@ -58,28 +58,22 @@ def seed_database():
             "User": {"read": True, "write": True, "delete": False},
             "Viewer": {"read": True, "write": False, "delete": False}
         }
+        global_roles = {}
         for role_name, permissions in roles_to_seed.items():
-            cur.execute(
+            role_id = uuid.uuid4()
+            global_roles[role_name] = role_id
+            await conn.execute(
                 """INSERT INTO roles (role_id, name, permissions, tenant_id, created_on, updated_on)
-                   VALUES (%s, %s, %s, %s, %s, %s)""",
-                (uuid.uuid4(), role_name, json.dumps(permissions), None, now, now)
+                           VALUES ($1, $2, $3::jsonb, $4, $5, $6)""",
+                role_id, role_name, json.dumps(permissions), None, now, now
             )
             print(f"  + Role: {role_name}")
 
-        password_hash = get_password_hash("Admin@123")
+        password_hash = get_password_hash("Password@123")
         
         # 3. Seed Plans and Sync with Stripe
         print("\nSeeding Plans...")
         plans = [
-            {
-                "id": uuid.uuid4(),
-                "name": "Free",
-                "price": 0.0,
-                "currency": "USD",
-                "billing_cycle": "monthly",
-                "description": "Basic plan for individuals",
-                "limits": {"documents": 10, "storage_mb": 50, "reports": 3}
-            },
             {
                 "id": uuid.uuid4(),
                 "name": "Pro",
@@ -87,7 +81,7 @@ def seed_database():
                 "currency": "USD",
                 "billing_cycle": "monthly",
                 "description": "Professional plan for small teams",
-                "limits": {"documents": 1000, "storage_mb": 5000, "reports": 100}
+                "limits": {"reports": 1000000, "documents": 1000000, "storage_mb": 10240, "ai_limit": 1000000, "total_tokens": 1000000, "ocr_pages": 100000, "storage_limit_mb": 10240}
             },
             {
                 "id": uuid.uuid4(),
@@ -96,7 +90,7 @@ def seed_database():
                 "currency": "USD",
                 "billing_cycle": "monthly",
                 "description": "Enterprise plan for large organizations",
-                "limits": {"documents": 100000, "storage_mb": 500000, "reports": 10000}
+                "limits": {"reports": 1000000, "documents": 1000000, "storage_mb": 10240, "ai_limit": 1000000, "total_tokens": 1000000, "ocr_pages": 100000, "storage_limit_mb": 10240}
             }
         ]
 
@@ -104,6 +98,7 @@ def seed_database():
         if stripe.api_key:
             print("  -> Fetching existing products from Stripe to prevent duplicates...")
             try:
+                # We can keep stripe calls sync or wrap in run_in_executor
                 all_products = stripe.Product.list(limit=100, active=True)
                 for prod in all_products:
                     existing_stripe_products[prod.name] = prod
@@ -165,10 +160,10 @@ def seed_database():
                 except stripe.error.StripeError as e:
                     print(f"     - Stripe Error for plan '{p['name']}': {e}")
 
-            cur.execute(
+            await conn.execute(
                 """INSERT INTO subscription_plans (plan_id, name, price, currency, billing_cycle, description, limits, stripe_monthly_price_id, stripe_yearly_price_id, created_on, updated_on) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                (p["id"], p["name"], p["price"], p["currency"], p["billing_cycle"], p["description"], json.dumps(p["limits"]), stripe_monthly_id, stripe_yearly_id, now, now)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, $10, $11)""",
+                p["id"], p["name"], p["price"], p["currency"], p["billing_cycle"], p["description"], json.dumps(p["limits"]), stripe_monthly_id, stripe_yearly_id, now, now
             )
             print(f"  + Plan '{p['name']}' seeded in DB.")
 
@@ -265,9 +260,9 @@ def seed_database():
         industry_map = {}
         for ind_name in industries:
             ind_id = uuid.uuid4()
-            cur.execute(
-                "INSERT INTO industries (industry_id, name, description, created_on, updated_on) VALUES (%s, %s, %s, %s, %s)",
-                (ind_id, ind_name, f"{ind_name} industry documents", now, now)
+            await conn.execute(
+                "INSERT INTO industries (industry_id, name, description, created_on, updated_on) VALUES ($1, $2, $3, $4, $5)",
+                ind_id, ind_name, f"{ind_name} industry documents", now, now
             )
             industry_map[ind_name] = ind_id
             print(f"  + Industry: {ind_name}")
@@ -275,50 +270,73 @@ def seed_database():
             if ind_name in seed_hierarchy:
                 for cat_name, subcategories in seed_hierarchy[ind_name].items():
                     cat_id = uuid.uuid4()
-                    cur.execute(
-                        "INSERT INTO categories (category_id, industry_id, name, created_on, updated_on) VALUES (%s, %s, %s, %s, %s)",
-                        (cat_id, ind_id, cat_name, now, now)
+                    await conn.execute(
+                        "INSERT INTO categories (category_id, industry_id, name, created_on, updated_on) VALUES ($1, $2, $3, $4, $5)",
+                        cat_id, ind_id, cat_name, now, now
                     )
                     print(f"    - Category: {cat_name}")
 
                     for sub_name in subcategories:
                         sub_id = uuid.uuid4()
-                        cur.execute(
-                            "INSERT INTO subcategories (subcategory_id, category_id, name, created_on, updated_on) VALUES (%s, %s, %s, %s, %s)",
-                            (sub_id, cat_id, sub_name, now, now)
+                        await conn.execute(
+                            "INSERT INTO subcategories (subcategory_id, category_id, name, created_on, updated_on) VALUES ($1, $2, $3, $4, $5)",
+                            sub_id, cat_id, sub_name, now, now
                         )
                     print(f"      -> Seeded {len(subcategories)} subcategories.")
 
         # 5. Seed Superadmin
         print("\nSeeding Superadmin...")
         system_tenant_id = uuid.uuid4()
-        cur.execute(
-            "INSERT INTO tenants (tenant_id, name, slug, org_name, created_on, updated_on) VALUES (%s, %s, %s, %s, %s, %s)",
-            (system_tenant_id, "SellingPoint System", "sellingpoint-system", "SellingPoint Inc.", now, now)
+        await conn.execute(
+            "INSERT INTO tenants (tenant_id, name, slug, org_name, created_on, updated_on) VALUES ($1, $2, $3, $4, $5, $6)",
+            system_tenant_id, "SellingPoint System", "sellingpoint-system", "SellingPoint Inc.", now, now
         )
         
         superadmin_role_id = uuid.uuid4()
-        cur.execute(
-            "INSERT INTO roles (role_id, tenant_id, name, permissions, created_on, updated_on) VALUES (%s, %s, %s, %s, %s, %s)",
-            (superadmin_role_id, system_tenant_id, "Super Admin", json.dumps({"all": True}), now, now)
+        await conn.execute(
+            "INSERT INTO roles (role_id, tenant_id, name, permissions, created_on, updated_on) VALUES ($1, $2, $3, $4::jsonb, $5, $6)",
+            superadmin_role_id, system_tenant_id, "Super Admin", json.dumps({"all": True}), now, now
         )
         
         superadmin_user_id = uuid.uuid4()
-        cur.execute(
+        await conn.execute(
             """INSERT INTO users (user_id, tenant_id, role_id, email, password_hash, first_name, last_name, created_on, updated_on) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            (superadmin_user_id, system_tenant_id, superadmin_role_id, "admin@sellingpoint.ai", password_hash, "System", "Admin", now, now)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
+            superadmin_user_id, system_tenant_id, superadmin_role_id, "admin@sellingpoint.ai", password_hash, "System", "Admin", now, now
         )
         print(f"Created Superadmin: admin@sellingpoint.ai")
+        
+        # 6. Seed Demo Tenant & Users
+        print("\nSeeding Demo Tenant and Users...")
+        demo_tenant_id = uuid.uuid4()
+        await conn.execute(
+            "INSERT INTO tenants (tenant_id, name, slug, org_name, created_on, updated_on) VALUES ($1, $2, $3, $4, $5, $6)",
+            demo_tenant_id, "Acme Corp (Demo)", "acme-corp", "Acme Corporation", now, now
+        )
+        
+        user_pwd_hash = get_password_hash("Password@123")
+        
+        demo_users = [
+            ("admin@demo.com", "Admin", "Demo", global_roles["Admin"]),
+            ("user@demo.com", "John", "User", global_roles["User"])
+        ]
+        
+        for email, fname, lname, role_id in demo_users:
+            await conn.execute(
+                """INSERT INTO users (user_id, tenant_id, role_id, email, password_hash, first_name, last_name, created_on, updated_on) 
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
+                uuid.uuid4(), demo_tenant_id, role_id, email, user_pwd_hash, fname, lname, now, now
+            )
+            print(f"Created Demo User: {email}")
 
-        conn.commit()
         print("\nDatabase seeded successfully!")
     except Exception as e:
-        conn.rollback()
         print(f"Error seeding database: {e}")
     finally:
-        cur.close()
-        conn.close()
+        await conn.close()
 
 if __name__ == "__main__":
-    seed_database()
+    if sys.platform == 'win32':
+        import selectors
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.run(seed_database())

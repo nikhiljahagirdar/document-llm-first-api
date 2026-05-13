@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Optional
-import psycopg
+import asyncpg
 from datetime import datetime
 import json
 from app.db_raw import DBWrapper
@@ -8,7 +8,7 @@ from app.db_raw import DBWrapper
 class MeteringService:
     @staticmethod
     async def record_usage(
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         tenant_id: Any,
         metric_name: str,
         quantity: int = 1,
@@ -28,7 +28,7 @@ class MeteringService:
 
     @staticmethod
     async def get_usage_summary(
-        conn: psycopg.AsyncConnection, tenant_id: Any
+        conn: asyncpg.Connection, tenant_id: Any
     ) -> List[Dict[str, Any]]:
         """
         Get a summary of all tracked metrics for a tenant's active subscription using raw SQL.

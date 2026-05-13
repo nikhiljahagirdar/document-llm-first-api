@@ -1,4 +1,4 @@
-import psycopg
+import asyncpg
 import json
 from typing import List, Optional
 import uuid
@@ -9,13 +9,13 @@ class TemplateDBService(BaseDBService):
     TEMPLATE_HIERARCHY_QUERY = """
     SELECT 
         t.*,
-        (SELECT row_to_json(i_data) FROM (SELECT industry_id, name FROM industries WHERE industry_id = t.industry_id) i_data) as industry,
-        (SELECT row_to_json(c_data) FROM (SELECT category_id, name FROM categories WHERE category_id = t.category_id) c_data) as category_rel,
-        (SELECT row_to_json(s_data) FROM (SELECT subcategory_id, name FROM subcategories WHERE subcategory_id = t.subcategory_id) s_data) as subcategory_rel
+        (SELECT row_to_json(i_data)::jsonb FROM (SELECT industry_id, name FROM industries WHERE industry_id = t.industry_id) i_data) as industry,
+        (SELECT row_to_json(c_data)::jsonb FROM (SELECT category_id, name FROM categories WHERE category_id = t.category_id) c_data) as category_rel,
+        (SELECT row_to_json(s_data)::jsonb FROM (SELECT subcategory_id, name FROM subcategories WHERE subcategory_id = t.subcategory_id) s_data) as subcategory_rel
     FROM templates t
     """
 
-    async def list_public_templates(self, conn: psycopg.AsyncConnection, limit: int = 20, offset: int = 0, industry_id: Optional[uuid.UUID] = None, category_id: Optional[uuid.UUID] = None, subcategory_id: Optional[uuid.UUID] = None, search: Optional[str] = None) -> List[dict]:
+    async def list_public_templates(self, conn: asyncpg.Connection, limit: int = 20, offset: int = 0, industry_id: Optional[uuid.UUID] = None, category_id: Optional[uuid.UUID] = None, subcategory_id: Optional[uuid.UUID] = None, search: Optional[str] = None) -> List[dict]:
         query = self.TEMPLATE_HIERARCHY_QUERY + " WHERE t.is_public = TRUE"
         params = []
         if industry_id:
@@ -34,15 +34,15 @@ class TemplateDBService(BaseDBService):
         params.extend([limit, offset])
         return await self.fetch_all(conn, query, tuple(params))
 
-    async def list_user_templates(self, conn: psycopg.AsyncConnection, tenant_id: uuid.UUID) -> List[dict]:
+    async def list_user_templates(self, conn: asyncpg.Connection, tenant_id: uuid.UUID) -> List[dict]:
         query = self.TEMPLATE_HIERARCHY_QUERY + " WHERE t.tenant_id = %s::uuid OR t.is_public = TRUE"
         return await self.fetch_all(conn, query, (tenant_id,))
 
-    async def get_template(self, conn: psycopg.AsyncConnection, template_id: uuid.UUID) -> Optional[dict]:
+    async def get_template(self, conn: asyncpg.Connection, template_id: uuid.UUID) -> Optional[dict]:
         query = self.TEMPLATE_HIERARCHY_QUERY + " WHERE t.template_id = %s::uuid"
         return await self.fetch_one(conn, query, (template_id,))
 
-    async def create_template(self, conn: psycopg.AsyncConnection, template_data: dict) -> dict:
+    async def create_template(self, conn: asyncpg.Connection, template_data: dict) -> dict:
         template_id = uuid.uuid4()
         columns = ["template_id"] + list(template_data.keys())
         placeholders = ["%s::uuid"] + ["%s"] * len(template_data)
@@ -57,7 +57,7 @@ class TemplateDBService(BaseDBService):
         await self.execute(conn, query, tuple(values))
         return await self.get_template(conn, template_id)
 
-    async def update_template(self, conn: psycopg.AsyncConnection, template_id: uuid.UUID, update_data: dict) -> Optional[dict]:
+    async def update_template(self, conn: asyncpg.Connection, template_id: uuid.UUID, update_data: dict) -> Optional[dict]:
         if update_data:
             set_clause = ", ".join([f"{k} = %s" for k in update_data.keys()])
             values = []
@@ -71,7 +71,7 @@ class TemplateDBService(BaseDBService):
             await self.execute(conn, query, tuple(values))
         return await self.get_template(conn, template_id)
 
-    async def delete_template(self, conn: psycopg.AsyncConnection, template_id: uuid.UUID, tenant_id: uuid.UUID) -> bool:
+    async def delete_template(self, conn: asyncpg.Connection, template_id: uuid.UUID, tenant_id: uuid.UUID) -> bool:
         # Check ownership
         check_query = "SELECT 1 FROM templates WHERE template_id = %s::uuid AND tenant_id = %s::uuid"
         if not await self.fetch_one(conn, check_query, (template_id, tenant_id)):

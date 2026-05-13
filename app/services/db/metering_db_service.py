@@ -1,4 +1,4 @@
-import psycopg
+import asyncpg
 from typing import List, Optional
 import uuid
 from datetime import datetime
@@ -7,7 +7,7 @@ from app.services.db.base_db_service import BaseDBService
 class MeteringDBService(BaseDBService):
     async def list_metering_records(
         self, 
-        conn: psycopg.AsyncConnection, 
+        conn: asyncpg.Connection, 
         tenant_id: uuid.UUID, 
         limit: int = 100, 
         offset: int = 0, 
@@ -31,7 +31,7 @@ class MeteringDBService(BaseDBService):
 
     async def get_usage_summary(
         self, 
-        conn: psycopg.AsyncConnection, 
+        conn: asyncpg.Connection, 
         tenant_id: uuid.UUID, 
         user_id: Optional[uuid.UUID] = None,
         role_name: str = "user"
@@ -213,7 +213,7 @@ class MeteringDBService(BaseDBService):
 
     async def create_metering_record(
         self, 
-        conn: psycopg.AsyncConnection, 
+        conn: asyncpg.Connection, 
         tenant_id: uuid.UUID, 
         metric_name: str, 
         quantity: int = 1,
@@ -230,7 +230,7 @@ class MeteringDBService(BaseDBService):
 
     async def check_usage_limits(
         self, 
-        conn: psycopg.AsyncConnection, 
+        conn: asyncpg.Connection, 
         tenant_id: uuid.UUID, 
         metric_type: str = "ai" # "ai", "ocr", or "storage"
     ):
@@ -238,43 +238,101 @@ class MeteringDBService(BaseDBService):
         Checks if the tenant has exceeded their plan limits.
         If no subscription exists, allows the operation (no limits enforced).
         """
-        try:
-            summary = await self.get_usage_summary(conn, tenant_id, role_name="tenant_admin")
-        except Exception:
-            return  # No subscription or DB error — allow operation
-        if not summary:
-            return  # No subscription — allow operation
+        query = """
+            SELECT s.current_period_start, p.limits 
+            FROM subscriptions s 
+            JOIN subscription_plans p ON s.plan_id::uuid = p.plan_id::uuid 
+            WHERE s.tenant_id::uuid = %s::uuid AND s.status IN ('active', 'trial')
+            LIMIT 1
+        """
+        subscription = await self.fetch_one(conn, query, (tenant_id,))
+        if not subscription:
+            return True
 
-        target_metric = None
+        limits = subscription.get("limits") or {}
+        if isinstance(limits, str):
+            import json
+            try: limits = json.loads(limits)
+            except: limits = {}
+
+        start_date = subscription.get("current_period_start")
+        used_amount = 0.0
+        limit_amount = -1
+
         if metric_type == "ai":
-            target_metric = next((m for m in summary if "AI" in m["metric_name"]), None)
+            limit_amount = float(limits.get("ai_limit", 1000000))
+            if limit_amount != -1:
+                usage_query = """
+                    SELECT SUM(quantity) as total 
+                    FROM usage_logs 
+                    WHERE tenant_id::uuid = %s::uuid 
+                      AND created_on >= %s 
+                      AND metric_name IN ('AI Usage (Tokens)', 'total_tokens', 'prompt_tokens', 'candidate_tokens')
+                """
+                usage_res = await self.fetch_one(conn, usage_query, (tenant_id, start_date))
+                used_amount = float(usage_res["total"] or 0)
         elif metric_type == "ocr":
-            target_metric = next((m for m in summary if "OCR" in m["metric_name"]), None)
+            limit_amount = float(limits.get("ocr_pages", 1000))
+            if limit_amount != -1:
+                usage_query = """
+                    SELECT SUM(quantity) as total 
+                    FROM usage_logs 
+                    WHERE tenant_id::uuid = %s::uuid 
+                      AND created_on >= %s 
+                      AND metric_name IN ('OCR Usage (Pages)', 'ocr_pages')
+                """
+                usage_res = await self.fetch_one(conn, usage_query, (tenant_id, start_date))
+                used_amount = float(usage_res["total"] or 0)
         elif metric_type == "storage":
-            target_metric = next((m for m in summary if "Storage" in m["metric_name"]), None)
+            limit_amount = float(limits.get("storage_limit_mb", 1024))
+            if limit_amount != -1:
+                storage_query = """
+                    SELECT SUM(file_size) as total_size 
+                    FROM documents 
+                    WHERE tenant_id::uuid = %s::uuid AND is_active = TRUE
+                """
+                storage_res = await self.fetch_one(conn, storage_query, (tenant_id,))
+                total_bytes = float(storage_res["total_size"] or 0)
+                used_amount = total_bytes / (1024 * 1024)
 
-        if not target_metric:
-            return
+        if limit_amount == -1:
+            return True
 
-        percent = target_metric["usage_percent"]
-        metric_name = target_metric["metric_name"]
+        percent = (used_amount / limit_amount) * 100 if limit_amount > 0 else 100
+        metric_display_names = {"ai": "AI Tokens", "ocr": "OCR Pages", "storage": "Storage (MB)"}
+        metric_name = metric_display_names.get(metric_type, metric_type)
 
         # 1. Block if limit reached
         if percent >= 100:
-            raise Exception(f"LIMIT REACHED: You have used 100% of your {metric_name} allowance. Operation cancelled.")
+            from app.services.notification_service import NotificationService
+            try:
+                # Find a tenant admin to notify
+                admin_res = await self.fetch_one(conn, "SELECT u.user_id FROM users u JOIN roles r ON u.role_id = r.role_id WHERE u.tenant_id = %s AND (r.name = 'tenant_admin' OR r.name = 'enterprise_tenant') LIMIT 1", (tenant_id,))
+                if admin_res:
+                    admin_id = admin_res["user_id"]
+                    await NotificationService.send_notification(
+                        str(admin_id),
+                        f"🛑 Limit Reached: {metric_name}",
+                        f"You have used 100% of your {metric_name} limit. Please upgrade your plan to continue.",
+                        "error"
+                    )
+            except Exception as e:
+                print(f"FAILED TO SEND LIMIT NOTIFICATION: {e}")
+                
+            return False
 
         # 2. Notify if approaching limit (90%)
         if percent >= 90:
             from app.services.notification_service import NotificationService
             try:
                 # Find a tenant admin to notify
-                admin_res = await self.fetch_one(conn, "SELECT u.user_id FROM users u JOIN roles r ON u.role_id = r.role_id WHERE u.tenant_id = %s AND r.name = 'tenant_admin' LIMIT 1", (tenant_id,))
+                admin_res = await self.fetch_one(conn, "SELECT u.user_id FROM users u JOIN roles r ON u.role_id = r.role_id WHERE u.tenant_id = %s AND (r.name = 'tenant_admin' OR r.name = 'enterprise_tenant') LIMIT 1", (tenant_id,))
                 if admin_res:
                     admin_id = admin_res["user_id"]
                     await NotificationService.send_notification(
                         str(admin_id),
                         f"⚠️ Usage Alert: {metric_name}",
-                        f"You have used {percent}% of your {metric_name} limit. Work will stop once you reach 100%.",
+                        f"You have used {percent:.1f}% of your {metric_name} limit. Work will stop once you reach 100%.",
                         "warning"
                     )
             except Exception as e:

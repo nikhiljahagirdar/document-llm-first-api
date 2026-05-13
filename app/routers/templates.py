@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import TemplateResponse, TemplateCreate, TemplateUpdate, TemplateGenerateRequest
 from typing import List, Optional, Any
@@ -8,7 +7,7 @@ import json
 from datetime import datetime
 from app.dependencies import get_current_user
 from app.services.render_service import generate_docx_template, render_html_template, parse_csv_data
-from app.services.storage_service import upload_bytes_to_s3
+from app.services.storage_service import upload_bytes_to_s3, get_s3_key_from_url, generate_presigned_url
 from app.services.llm_service import LLMService
 from app.services.db.template_db_service import TemplateDBService
 from app.services.db.industry_db_service import IndustryDBService
@@ -30,6 +29,16 @@ async def get_category_service():
 async def get_subcategory_service():
     return SubcategoryDBService()
 
+def prepare_template_response(t: dict) -> dict:
+    if not t: return t
+    header_img = t.get("header_image")
+    if header_img and "amazonaws.com" in header_img:
+        key = get_s3_key_from_url(header_img)
+        presigned = generate_presigned_url(key)
+        if presigned:
+            t["header_image"] = presigned
+    return t
+
 @router.get("/public", response_model=List[TemplateResponse])
 async def get_public_templates(
     search: Optional[str] = None,
@@ -38,25 +47,27 @@ async def get_public_templates(
     industry_id: Optional[uuid.UUID] = None,
     category_id: Optional[uuid.UUID] = None,
     subcategory_id: Optional[uuid.UUID] = None,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: TemplateDBService = Depends(get_template_service)
 ):
     """
     Retrieve all public document generation templates with search and pagination.
     """
-    return await service.list_public_templates(conn, limit, offset, industry_id, category_id, subcategory_id, search)
+    templates = await service.list_public_templates(conn, limit, offset, industry_id, category_id, subcategory_id, search)
+    return [prepare_template_response(t) for t in templates]
 
 
 @router.get("/my", response_model=List[TemplateResponse])
 async def get_my_templates(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service)
 ):
     """
     Retrieve templates owned by the current tenant or public templates.
     """
-    return await service.list_user_templates(conn, current_user.tenant_id)
+    templates = await service.list_user_templates(conn, current_user.tenant_id)
+    return [prepare_template_response(t) for t in templates]
 
 
 @router.post("/ai-builder", response_model=TemplateResponse)
@@ -64,7 +75,7 @@ async def ai_template_builder(
     industry_id: uuid.UUID,
     category_id: uuid.UUID,
     subcategory_id: Optional[uuid.UUID] = None,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service),
     ind_service: IndustryDBService = Depends(get_industry_service),
@@ -91,6 +102,8 @@ async def ai_template_builder(
     )
 
     if "error" in ai_template:
+        if "LIMIT_REACHED" in ai_template["error"]:
+            raise HTTPException(status_code=403, detail=ai_template["error"])
         raise HTTPException(status_code=500, detail=ai_template["error"])
 
     now = datetime.now()
@@ -121,13 +134,14 @@ async def ai_template_builder(
         {"template_name": result["template_name"]}
     )
     
-    return result
+    
+    return prepare_template_response(result)
 
 
 @router.post("", response_model=TemplateResponse)
 async def create_template(
     template_data: TemplateCreate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service),
     ind_service: IndustryDBService = Depends(get_industry_service),
@@ -145,6 +159,8 @@ async def create_template(
         )
         
         if "error" in ai_template:
+            if "LIMIT_REACHED" in ai_template["error"]:
+                raise HTTPException(status_code=403, detail=ai_template["error"])
             raise HTTPException(status_code=500, detail=ai_template["error"])
             
         # Update template_data with AI results
@@ -199,14 +215,15 @@ async def create_template(
         {"template_name": result["template_name"]}
     )
     
-    return result
+    
+    return prepare_template_response(result)
 
 
 @router.post("/{template_id}/generate")
 async def generate_document_from_template(
     template_id: uuid.UUID,
     request: TemplateGenerateRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service)
 ):
@@ -290,10 +307,12 @@ async def generate_document_from_template(
         {"filename": filename, "doc_id": str(unique_id)}
     )
 
+    presigned_url = generate_presigned_url(get_s3_key_from_url(s3_url)) or s3_url
+
     return {
         "document_id": unique_id,
         "filename": filename,
-        "url": s3_url,
+        "url": presigned_url,
         "status": "generated"
     }
 
@@ -301,20 +320,20 @@ async def generate_document_from_template(
 @router.get("/{template_id}", response_model=TemplateResponse)
 async def get_template(
     template_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: TemplateDBService = Depends(get_template_service)
 ):
     template = await service.get_template(conn, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    return template
+    return prepare_template_response(template)
 
 
 @router.patch("/{template_id}", response_model=TemplateResponse)
 async def update_template(
     template_id: uuid.UUID, 
     template_update: TemplateUpdate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service)
 ):
@@ -334,13 +353,13 @@ async def update_template(
         "template_update", "template", str(template_id)
     )
     
-    return result
+    return prepare_template_response(result)
 
 
 @router.delete("/{template_id}")
 async def delete_template(
     template_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service)
 ):

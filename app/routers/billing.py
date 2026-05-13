@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import (
     SubscriptionResponse, 
@@ -47,7 +46,7 @@ async def get_paypal_access_token():
 @router.get("/subscription", response_model=SubscriptionResponse)
 async def get_tenant_subscription(
     tenant: Any = Depends(get_current_tenant), 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     sub = await service.get_tenant_subscription(conn, tenant.tenant_id)
@@ -64,7 +63,7 @@ async def create_checkout_session(
     request: CheckoutSessionRequest,
     current_user: Optional[Any] = Depends(get_optional_user),
     tenant: Optional[Any] = Depends(get_optional_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     plan = await service.get_plan_by_id(conn, request.plan_id)
@@ -146,7 +145,7 @@ async def get_billing_history(
     limit: int = 20,
     offset: int = 0,
     tenant: Any = Depends(get_current_tenant), 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     """
@@ -157,7 +156,7 @@ async def get_billing_history(
 @router.post("/webhooks/stripe")
 async def stripe_webhook(
     payload: dict,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     event_type = payload.get("type")
@@ -200,7 +199,7 @@ require_superadmin = RoleChecker(["Super Admin"])
     dependencies=[Depends(require_superadmin)]
 )
 async def sync_plans_with_stripe(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     if not stripe.api_key:
@@ -275,7 +274,7 @@ async def sync_plans_with_stripe(
 @router.post("/webhooks/paypal")
 async def paypal_webhook(
     payload: dict,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     event_type = payload.get("event_type")
@@ -312,7 +311,7 @@ class StripeSyncRequest(BaseModel):
 )
 async def sync_checkout_session(
     request: StripeSyncRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: BillingDBService = Depends(get_billing_service)
 ):
     from datetime import timedelta

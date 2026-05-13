@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import (
     CategoryCreate, 
@@ -9,7 +8,7 @@ from app.schemas import (
 )
 from app.services.db.category_db_service import CategoryDBService
 from app.services.db.industry_db_service import IndustryDBService
-from typing import List, Optional
+from typing import List, Optional, Any
 import uuid
 
 router = APIRouter(prefix="/categories", tags=["categories"])
@@ -22,7 +21,7 @@ async def get_industry_service():
 
 @router.get("", response_model=List[CategoryResponse])
 async def list_categories(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: CategoryDBService = Depends(get_category_service),
     limit: int = 100,
     offset: int = 0,
@@ -41,7 +40,7 @@ async def list_categories(
 @router.post("", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_category(
     category: CategoryCreate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: CategoryDBService = Depends(get_category_service),
     industry_service: IndustryDBService = Depends(get_industry_service)
 ):
@@ -63,7 +62,7 @@ async def create_category(
 @router.get("/{category_id}", response_model=CategoryResponse)
 async def get_category(
     category_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: CategoryDBService = Depends(get_category_service)
 ):
     """
@@ -80,7 +79,7 @@ async def get_category(
 async def update_category(
     category_id: uuid.UUID, 
     category_update: CategoryUpdate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: CategoryDBService = Depends(get_category_service),
     industry_service: IndustryDBService = Depends(get_industry_service)
 ):
@@ -106,7 +105,7 @@ async def update_category(
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
     category_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: CategoryDBService = Depends(get_category_service)
 ):
     """

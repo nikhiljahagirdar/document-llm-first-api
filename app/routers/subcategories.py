@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import (
     SubcategoryCreate, 
@@ -8,7 +7,7 @@ from app.schemas import (
 )
 from app.services.db.subcategory_db_service import SubcategoryDBService
 from app.services.db.category_db_service import CategoryDBService
-from typing import List, Optional
+from typing import List, Optional, Any
 import uuid
 
 router = APIRouter(prefix="/subcategories", tags=["subcategories"])
@@ -21,7 +20,7 @@ async def get_category_service():
 
 @router.get("", response_model=List[SubcategoryResponse])
 async def list_subcategories(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: SubcategoryDBService = Depends(get_subcategory_service),
     limit: int = 100,
     offset: int = 0,
@@ -35,7 +34,7 @@ async def list_subcategories(
 @router.post("", response_model=SubcategoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_subcategory(
     subcategory: SubcategoryCreate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: SubcategoryDBService = Depends(get_subcategory_service),
     category_service: CategoryDBService = Depends(get_category_service)
 ):
@@ -54,7 +53,7 @@ async def create_subcategory(
 @router.get("/{subcategory_id}", response_model=SubcategoryResponse)
 async def get_subcategory(
     subcategory_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: SubcategoryDBService = Depends(get_subcategory_service)
 ):
     """
@@ -69,7 +68,7 @@ async def get_subcategory(
 async def update_subcategory(
     subcategory_id: uuid.UUID, 
     subcategory_update: SubcategoryUpdate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: SubcategoryDBService = Depends(get_subcategory_service),
     category_service: CategoryDBService = Depends(get_category_service)
 ):
@@ -92,7 +91,7 @@ async def update_subcategory(
 @router.delete("/{subcategory_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_subcategory(
     subcategory_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: SubcategoryDBService = Depends(get_subcategory_service)
 ):
     """

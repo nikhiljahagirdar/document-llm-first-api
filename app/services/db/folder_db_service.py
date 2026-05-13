@@ -1,13 +1,13 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List, Any
-import psycopg
+import asyncpg
 from app.services.db.base_db_service import BaseDBService
 
 class FolderDBService(BaseDBService):
     async def create_folder(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         tenant_id: uuid.UUID,
         user_id: uuid.UUID,
         name: str,
@@ -29,7 +29,7 @@ class FolderDBService(BaseDBService):
 
     async def get_folder(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         folder_id: uuid.UUID,
         tenant_id: uuid.UUID,
     ) -> Optional[dict]:
@@ -38,7 +38,7 @@ class FolderDBService(BaseDBService):
 
     async def list_folders(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         tenant_id: uuid.UUID,
         parent_folder_id: Optional[uuid.UUID] = None,
         search: Optional[str] = None
@@ -61,7 +61,7 @@ class FolderDBService(BaseDBService):
 
     async def update_folder(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         folder_id: uuid.UUID,
         tenant_id: uuid.UUID,
         data: dict
@@ -73,7 +73,7 @@ class FolderDBService(BaseDBService):
 
     async def delete_folder(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         folder_id: uuid.UUID,
         tenant_id: uuid.UUID
     ) -> bool:

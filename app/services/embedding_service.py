@@ -1,4 +1,3 @@
-from google.genai import types
 import os
 import hashlib
 import json
@@ -7,11 +6,6 @@ from fastapi_cache import FastAPICache
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-def get_genai_client():
-    from app.services.llm_service import get_genai_client as get_client
-    return get_client()
 
 
 async def get_text_embedding(text: str) -> List[float]:
@@ -96,16 +90,13 @@ async def answer_with_context(
     """
 
     try:
-        from app.services.llm_service import LLMService
+        from app.services.llm_service import get_llm, LLMService, _extract_text
 
-        client = get_genai_client()
-        response = await client.aio.models.generate_content(
-            model=os.getenv("AI_LLM_MODEL", "gemini-2.0-flash"),
-            contents=prompt,
-        )
+        llm = get_llm(temperature=0.2)
+        response = await llm.ainvoke(prompt)
         if tenant_id:
             await LLMService.log_response_usage(conn, tenant_id, response)
-        return response.text
+        return _extract_text(response.content)
     except Exception as e:
         logger.error(f"QA failed: {e}", exc_info=True)
         return f"Error generating answer: {e}"

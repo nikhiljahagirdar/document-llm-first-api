@@ -1,14 +1,13 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List, Any
-import psycopg
 import json
 from app.services.db.base_db_service import BaseDBService
 
 class DocumentDBService(BaseDBService):
     async def create_document(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         doc_id: uuid.UUID,
         tenant_id: uuid.UUID,
         user_id: uuid.UUID,
@@ -59,7 +58,7 @@ class DocumentDBService(BaseDBService):
 
     async def create_manual_document(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         tenant_id: uuid.UUID,
         user_id: uuid.UUID,
         filename: str,
@@ -93,7 +92,7 @@ class DocumentDBService(BaseDBService):
 
     async def update_document_statuses(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         document_id: uuid.UUID,
         status: str,
         message: Optional[str] = None,
@@ -141,7 +140,7 @@ class DocumentDBService(BaseDBService):
 
     async def update_document_metadata(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         document_id: uuid.UUID,
         file_type: str,
         page_count: int,
@@ -160,7 +159,7 @@ class DocumentDBService(BaseDBService):
 
     async def get_document(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         document_id: uuid.UUID,
         tenant_id: uuid.UUID,
         user_id: Optional[uuid.UUID] = None,
@@ -189,7 +188,7 @@ class DocumentDBService(BaseDBService):
 
     async def list_documents(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         tenant_id: uuid.UUID,
         user_id: Optional[uuid.UUID] = None,
         is_admin: bool = False,
@@ -235,7 +234,7 @@ class DocumentDBService(BaseDBService):
 
     async def save_document_version(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         document_id: uuid.UUID,
         version_number: int,
         content: str,
@@ -248,6 +247,11 @@ class DocumentDBService(BaseDBService):
             INSERT INTO document_versions (version_id, document_id, version_number, content, content_json, content_html, embedding, created_by, created_on)
             VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::vector, %s::uuid, %s)
         """
+        if embedding is not None and isinstance(embedding, list):
+            embedding_str = str(embedding)
+        else:
+            embedding_str = embedding
+
         await self.execute(
             conn,
             query,
@@ -258,14 +262,14 @@ class DocumentDBService(BaseDBService):
                 content,
                 content_json,
                 content_html,
-                embedding,
+                embedding_str,
                 user_id,
                 datetime.now(),
             ),
         )
 
     async def save_document_image(
-        self, conn: psycopg.AsyncConnection, document_id: uuid.UUID, image_url: str
+        self, conn: Any, document_id: uuid.UUID, image_url: str
     ):
         await self.execute(
             conn,
@@ -273,25 +277,25 @@ class DocumentDBService(BaseDBService):
             (uuid.uuid4(), document_id, image_url, datetime.now()),
         )
 
-    async def get_ocr_result(self, conn: psycopg.AsyncConnection, document_id: uuid.UUID) -> Optional[dict]:
+    async def get_ocr_result(self, conn: Any, document_id: uuid.UUID) -> Optional[dict]:
         query = "SELECT * FROM ocr_results WHERE document_id::uuid = %s::uuid"
         return await self.fetch_one(conn, query, (document_id,))
 
-    async def get_versions(self, conn: psycopg.AsyncConnection, document_id: uuid.UUID) -> List[dict]:
+    async def get_versions(self, conn: Any, document_id: uuid.UUID) -> List[dict]:
         query = "SELECT * FROM document_versions WHERE document_id::uuid = %s::uuid ORDER BY version_number DESC"
         return await self.fetch_all(conn, query, (document_id,))
 
-    async def get_document_by_google_id(self, conn: psycopg.AsyncConnection, google_file_id: str, tenant_id: uuid.UUID) -> Optional[dict]:
+    async def get_document_by_google_id(self, conn: Any, google_file_id: str, tenant_id: uuid.UUID) -> Optional[dict]:
         query = "SELECT * FROM documents WHERE google_file_id = %s AND tenant_id = %s::uuid AND is_active = TRUE LIMIT 1"
         return await self.fetch_one(conn, query, (google_file_id, tenant_id))
 
-    async def get_images(self, conn: psycopg.AsyncConnection, document_id: uuid.UUID) -> List[dict]:
+    async def get_images(self, conn: Any, document_id: uuid.UUID) -> List[dict]:
         query = "SELECT * FROM document_images WHERE document_id::uuid = %s::uuid"
         return await self.fetch_all(conn, query, (document_id,))
 
     async def delete_document(
         self,
-        conn: psycopg.AsyncConnection,
+        conn: Any,
         document_id: uuid.UUID,
         tenant_id: uuid.UUID,
         user_id: Optional[uuid.UUID] = None,
@@ -307,6 +311,45 @@ class DocumentDBService(BaseDBService):
         await self.execute(conn, query, tuple(params))
         return True
 
-    async def list_failed_documents(self, conn: psycopg.AsyncConnection) -> List[dict]:
-        query = "SELECT * FROM documents WHERE status = 'failed' AND is_active = TRUE AND updated_on < NOW() - INTERVAL '5 minutes' LIMIT 50"
+    async def list_failed_documents(self, conn: Any) -> List[dict]:
+        query = """
+            SELECT * FROM documents 
+            WHERE is_active = TRUE 
+            AND (
+                (status = 'failed' AND updated_on < NOW() - INTERVAL '5 minutes')
+                OR 
+                (status = 'processing' AND updated_on < NOW() - INTERVAL '15 minutes')
+            )
+            LIMIT 50
+        """
         return await self.fetch_all(conn, query)
+
+    async def check_document_exists(self, conn: Any, tenant_id: uuid.UUID, filename: str) -> bool:
+        query = "SELECT document_id FROM documents WHERE tenant_id = %s::uuid AND filename = %s AND is_active = TRUE"
+        result = await self.fetch_one(conn, query, (tenant_id, filename))
+        return bool(result)
+
+    async def get_google_credentials(self, conn: Any, user_id: uuid.UUID) -> Optional[dict]:
+        query = "SELECT access_token, refresh_token, expires_at FROM user_credentials WHERE user_id = %s::uuid AND provider = 'google'"
+        return await self.fetch_one(conn, query, (user_id,))
+
+    async def update_google_credentials(self, conn: Any, user_id: uuid.UUID, access_token: str, expires_at: datetime):
+        query = "UPDATE user_credentials SET access_token = %s, expires_at = %s WHERE user_id = %s::uuid AND provider = 'google'"
+        await self.execute(conn, query, (access_token, expires_at, user_id))
+
+    async def save_ocr_result(self, conn: Any, document_id: uuid.UUID, extracted_text: str, source: str):
+        await self.execute(conn, "DELETE FROM ocr_results WHERE document_id::uuid = %s::uuid", (document_id,))
+        query = "INSERT INTO ocr_results (ocr_id, document_id, extracted_text, status) VALUES (%s::uuid, %s::uuid, %s, %s)"
+        await self.execute(conn, query, (str(uuid.uuid4()), document_id, json.dumps({"text": extracted_text, "source": source}), "completed"))
+
+    async def update_document_classification(self, conn: Any, document_id: uuid.UUID, industry_id: uuid.UUID, category_id: uuid.UUID, subcategory_id: uuid.UUID):
+        query = "UPDATE documents SET industry_id = %s::uuid, category_id = %s::uuid, subcategory_id = %s::uuid WHERE document_id::uuid = %s::uuid"
+        await self.execute(conn, query, (industry_id, category_id, subcategory_id, document_id))
+
+    async def update_google_sync(self, conn: Any, document_id: uuid.UUID, gdoc_id: str, modified_time: datetime, is_new: bool = False):
+        if is_new:
+            query = "UPDATE documents SET google_file_id = %s, google_last_modified = %s WHERE document_id = %s::uuid"
+            await self.execute(conn, query, (gdoc_id, modified_time, document_id))
+        else:
+            query = "UPDATE documents SET google_last_modified = %s, updated_on = NOW() WHERE document_id = %s::uuid"
+            await self.execute(conn, query, (modified_time, document_id))

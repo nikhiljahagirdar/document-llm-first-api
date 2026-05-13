@@ -5,78 +5,23 @@ import logging
 import json
 from typing import List, Optional, Any
 
-from haystack import Pipeline, Document, component
-from haystack.components.writers import DocumentWriter
-from haystack.document_stores.types import DuplicatePolicy
-from haystack.components.builders.prompt_builder import PromptBuilder
-
-from app.db_raw import DBWrapper, DATABASE_URL, get_connection
-from app.services.llm_service import LLMService, GeminiTextEmbedder, GeminiGenerator, GeminiDocumentEmbedder
-from app.services.custom_haystack import CustomPgvectorDocumentStore
+from app.db_raw import DBWrapper, get_connection
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-@component
-class RobustDoclingConverter:
-    """Custom Haystack component using our configured Docling converter."""
-    @component.output_types(documents=List[Document])
-    def run(self, sources: List[str]):
-        from app.services.document_processing import get_docling_converter
-        import gc
-        converter = get_docling_converter()
-        documents = []
-        for source in sources:
-            try:
-                logger.info(f"RobustDoclingConverter: Converting {source}")
-                result = converter.convert(source)
-                doc = result.document
-                markdown_text = doc.export_to_markdown()
-                documents.append(Document(content=markdown_text, meta={"file_path": source}))
-            except Exception as e:
-                logger.error(f"RobustDoclingConverter failed for {source}: {e}")
-            finally:
-                gc.collect()
-        return {"documents": documents}
-
-@component
-class MetadataEnricher:
-    """Haystack component to add metadata to documents before indexing."""
-    def __init__(self, metadata: dict):
-        self.metadata = metadata
-
-    @component.output_types(documents=List[Document])
-    def run(self, documents: List[Document]):
-        for doc in documents:
-            doc.meta.update(self.metadata)
-            # Ensure chunk_id is a valid UUID for pgvector
-            if not doc.id or doc.id == doc.content: # Default Haystack ID can be content hash
-                import hashlib
-                content_hash = hashlib.md5(doc.content.encode()).hexdigest()
-                doc.id = str(uuid.UUID(content_hash))
-        return {"documents": documents}
-
 class RAGService:
-
-    @staticmethod
-    def get_document_store():
-        """Initializes and returns the Haystack Document Store."""
-        from haystack.utils import Secret
-        return CustomPgvectorDocumentStore(
-            connection_string=Secret.from_token(DATABASE_URL),
-            table_name="document_chunks",
-            embedding_dimension=3072, # Matches database schema (gemini-embedding-2)
-            vector_function="cosine_similarity",
-            recreate_table=False,
-        )
 
     @staticmethod
     async def ingest_document(conn, document_id: uuid.UUID, tenant_id: uuid.UUID, text: str, version_id: uuid.UUID = None, file_path: str = None):
         """
-        Ingests a document into the RAG system using a Robust Docling pipeline.
+        Ingests a document into the RAG system using native chunking and pgvector.
         """
         try:
-            document_store = RAGService.get_document_store()
+            from app.services.llm_service import LLMService
+            from app.services.embedding_service import chunk_text_recursive
+            
+            logger.info(f"RAG: Starting manual ingestion for doc {document_id}, tenant {tenant_id}")
             
             # 1. Clean up existing chunks for this document
             if conn:
@@ -85,43 +30,50 @@ class RAGService:
                     "DELETE FROM document_chunks WHERE document_id = %s::uuid",
                     (document_id,)
                 )
-            
-            # 2. Build and run indexing pipeline
-            from haystack.components.preprocessors import DocumentSplitter
-            pipeline = Pipeline()
-            
-            metadata = {
-                "document_id": str(document_id),
-                "tenant_id": str(tenant_id),
-                "version_id": str(version_id) if version_id else None
-            }
-            logger.info(f"RAG: Starting ingestion for doc {document_id}, tenant {tenant_id}")
-
-            pipeline.add_component("splitter", DocumentSplitter(split_by="word", split_length=500, split_overlap=50))
-            pipeline.add_component("enricher", MetadataEnricher(metadata=metadata))
-            pipeline.add_component("embedder", GeminiDocumentEmbedder())
-            pipeline.add_component("writer", DocumentWriter(document_store=document_store, policy=DuplicatePolicy.OVERWRITE))
-            
-            pipeline.connect("splitter", "enricher")
-            pipeline.connect("enricher", "embedder")
-            pipeline.connect("embedder", "writer")
-
-            if file_path and os.path.exists(file_path):
-                # Use our robust converter
-                pipeline.add_component("converter", RobustDoclingConverter())
-                pipeline.connect("converter", "splitter")
-                
-                # Run indexing
-                result = await asyncio.to_thread(pipeline.run, {"converter": {"sources": [file_path]}})
-                logger.info(f"RAG: Pipeline run complete for {document_id}. Result: {result}")
             else:
-                # Fallback to simple text ingestion
-                doc = Document(content=text, meta=metadata)
-                result = await asyncio.to_thread(pipeline.run, {"splitter": {"documents": [doc]}})
-                logger.info(f"RAG: Simple ingestion complete for {document_id}. Result: {result}")
+                async with get_connection() as new_conn:
+                    await DBWrapper.execute(
+                        new_conn,
+                        "DELETE FROM document_chunks WHERE document_id = %s::uuid",
+                        (document_id,)
+                    )
+            
+            if not text or not text.strip():
+                logger.warning(f"RAG: No text provided for document {document_id}")
+                return 0
 
-            logger.info(f"RAG: Ingested document {document_id} for tenant {tenant_id}")
-            return 1
+            # 2. Chunk the text
+            chunks = chunk_text_recursive(text, chunk_size=1000, chunk_overlap=150)
+            if not chunks:
+                return 0
+                
+            # 3. Insert into database (Without Embeddings)
+            insert_query = """
+                INSERT INTO document_chunks (chunk_id, document_id, version_id, tenant_id, content)
+                VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s)
+            """
+            
+            async def do_insert(c):
+                params_list = [
+                    (uuid.uuid4(), document_id, version_id, tenant_id, chunk_text)
+                    for chunk_text in chunks
+                ]
+                await DBWrapper.executemany(c, insert_query, params_list)
+
+            if conn:
+                await do_insert(conn)
+            else:
+                async with get_connection() as new_conn:
+                    await do_insert(new_conn)
+
+            # Log usage
+            if tenant_id:
+                total_len = sum(len(c) for c in chunks)
+                LLMService.fire_and_forget_log(tenant_id, "AI Usage (Tokens)", total_len//4)
+
+            logger.info(f"RAG: Successfully ingested {len(chunks)} chunks for document {document_id}")
+            return len(chunks)
+            
         except Exception as e:
             logger.error(f"RAG: Ingestion failed for {document_id}: {e}", exc_info=True)
             return 0
@@ -129,133 +81,235 @@ class RAGService:
     @staticmethod
     async def retrieve_context(conn, tenant_id: uuid.UUID, query: str, document_id: Optional[uuid.UUID] = None, limit: int = 5) -> List[str]:
         """
-        Retrieves relevant context using a semantic search via Haystack.
+        Retrieves relevant context using PostgreSQL full-text keyword search over the content column.
         """
         try:
-            document_store = RAGService.get_document_store()
-            from haystack_integrations.components.retrievers.pgvector import PgvectorEmbeddingRetriever
+            sql = """
+                SELECT content::text
+                FROM document_chunks 
+                WHERE tenant_id::uuid = %s::uuid 
+                AND to_tsvector('english', content) @@ websearch_to_tsquery('english', %s)
+            """
+            params = [tenant_id, query]
             
-            filters = {"tenant_id": str(tenant_id)}
             if document_id:
-                filters["document_id"] = str(document_id)
+                sql += " AND document_id::uuid = %s::uuid"
+                params.append(document_id)
+                
+            sql += " ORDER BY ts_rank(to_tsvector('english', content), websearch_to_tsquery('english', %s)) DESC LIMIT %s"
+            params.extend([query, limit])
+            
+            async def fetch(c):
+                return await DBWrapper.fetch_all(c, sql, tuple(params))
+                
+            if conn:
+                results = await fetch(conn)
+            else:
+                async with get_connection() as new_conn:
+                    results = await fetch(new_conn)
+            
+            # Fallback if no exact full-text matches but document_id is provided
+            if not results and document_id:
+                fallback_sql = "SELECT content::text FROM document_chunks WHERE tenant_id::uuid = %s::uuid AND document_id::uuid = %s::uuid LIMIT %s"
+                if conn:
+                    results = await DBWrapper.fetch_all(conn, fallback_sql, (tenant_id, document_id, limit))
+                else:
+                    async with get_connection() as new_conn:
+                        results = await DBWrapper.fetch_all(new_conn, fallback_sql, (tenant_id, document_id, limit))
 
-            # Build Query Pipeline
-            pipeline = Pipeline()
-            pipeline.add_component("text_embedder", GeminiTextEmbedder())
-            pipeline.add_component("retriever", PgvectorEmbeddingRetriever(document_store=document_store))
+            return [row["content"] for row in results if row.get("content")]
             
-            pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
-            
-            # Run retrieval
-            result = await asyncio.to_thread(
-                pipeline.run, 
-                {
-                    "text_embedder": {"text": query},
-                    "retriever": {"top_k": limit, "filters": filters}
-                }
-            )
-            
-            docs = result.get("retriever", {}).get("documents", [])
-            return [doc.content for doc in docs]
         except Exception as e:
             logger.error(f"RAG: Retrieval failed: {e}")
             return []
 
     @staticmethod
-    async def query_with_rag(conn, query: str, tenant_id: uuid.UUID, document_id: Optional[uuid.UUID] = None) -> str:
+    async def query_with_rag(conn, query: str, tenant_id: uuid.UUID, document_id: Optional[uuid.UUID] = None, history: List[Any] = None) -> str:
         """
-        End-to-end RAG query using Haystack pipeline.
-        With fallback to full document text and structured data from document_versions if specific document is targeted.
+        End-to-end traditional RAG query.
         """
         try:
-            logger.info(f"RAG: Querying with RAG - Tenant: {tenant_id}, Document: {document_id}, Query: {query}")
+            logger.info(f"RAG: Querying with traditional RAG Pipeline - Tenant: {tenant_id}, Document: {document_id}, Query: {query}")
+            from app.services.llm_service import get_llm, LLMService, _extract_text
             
-            # 1. Retrieve Context via Semantic Search (RAG)
-            chunks = await RAGService.retrieve_context(conn, tenant_id, query, document_id)
-            
-            context_parts = []
-            if chunks:
-                context_parts.append("### Relevant Document Sections:\n" + "\n\n----- \n\n".join(chunks))
-                logger.info(f"RAG: Found {len(chunks)} semantic chunks.")
-
-            # 2. Fallback / Enrichment for Single Document Chat
+            # 1. Retrieve Context from document_versions (latest version)
+            final_context = ""
             if document_id:
-                logger.info(f"RAG: Fetching full context from document_versions for document {document_id}")
-                from app.services.db.document_db_service import DocumentDBService
-                doc_service = DocumentDBService()
-                
-                versions = []
-                if conn:
-                    versions = await doc_service.get_versions(conn, document_id)
-                else:
-                    async with get_connection() as new_conn:
-                        versions = await doc_service.get_versions(new_conn, document_id)
-                
-                if versions:
-                    v = versions[0]
-                    full_text = v.get("content")
-                    content_json = v.get("content_json")
-                    
-                    if full_text:
-                        # If RAG found nothing or if it's a specific document chat, use full text
-                        if not chunks or len(full_text) < 150000:
-                            context_parts.append(f"### Full Document Text:\n{full_text}")
-                            logger.info(f"RAG: Included full text (Length: {len(full_text)})")
-                    
-                    if content_json:
-                        # Include structured data if available, as it often has better relationship info
-                        json_str = json.dumps(content_json, indent=2) if isinstance(content_json, (dict, list)) else str(content_json)
-                        if len(json_str) < 50000: # Don't overwhelm if JSON is huge
-                            context_parts.append(f"### Extracted Structured Data (JSON):\n{json_str}")
-                            logger.info(f"RAG: Included structured data (Length: {len(json_str)})")
-                else:
-                    logger.warning(f"RAG: No versions found for document {document_id}")
+                sql = "SELECT content FROM document_versions WHERE document_id = %s::uuid ORDER BY version_number DESC LIMIT 1"
+                row = await DBWrapper.fetch_one(conn, sql, (document_id,))
+                if row and row.get("content"):
+                    final_context = row["content"]
             
-            if not context_parts:
-                logger.warning("RAG: No context found after RAG and enrichment.")
-                return "No relevant information found in your documents. Please ensure the document has been processed successfully and contains extractable text."
+            # Fallback to chunks if no version content or no document_id
+            if not final_context:
+                chunks = await RAGService.retrieve_context(conn, tenant_id, query, document_id, limit=10)
+                if chunks:
+                    final_context = "\n\n".join([f"--- Chunk {i+1} ---\n{c}" for i, c in enumerate(chunks)])
 
-            final_context = "\n\n".join(context_parts)
-            logger.info(f"RAG: Final context length for LLM: {len(final_context)}")
+            if not final_context:
+                return "No relevant information found in your documents to answer this question."
 
-            # 3. Generate Answer
-            prompt_template = """
+            # 2. Build History string
+            history_str = ""
+            if history:
+                history_parts = []
+                for msg in history:
+                    role = "User" if (getattr(msg, 'role', 'user') == 'user') else "Assistant"
+                    content = getattr(msg, 'content', '')
+                    history_parts.append(f"{role}: {content}")
+                history_str = "\n".join(history_parts)
+
+            # 3. Build Prompt
+            formatted_prompt = f"""
             You are a professional Document Intelligence Assistant. 
-            Answer the question based ONLY on the provided context. 
-            The context may include semantic chunks, full document text, and extracted structured data (JSON).
+            Answer the question based ONLY on the provided context documents. 
 
             ### UI REPRESENTATION GUIDELINES:
             1. **Clarity**: Use clear, concise language.
             2. **Structure**: If the answer involves data, use an HTML table (standard <table> tags with <thead> and <tbody>).
-            3. **Visuals**: If the answer involves trends, comparisons, or distributions, include a JSON block marked as `### DATA_FOR_CHART ###` containing keys: `type` (bar, pie, line), `labels` (array), and `datasets` (array of {label, data}).
+            3. **Visuals**: If the answer involves trends, comparisons, or distributions, include a JSON block marked as `### DATA_FOR_CHART ###` containing keys: `type` (bar, pie, line), `labels` (array), and `datasets` (array of {{label, data}}).
             4. **Rich Text**: Use standard HTML for bolding, lists, and headings for better readability in the UI. Do NOT include <html> or <body> tags.
 
-            Context:
-            {{context}}
+            Context Documents:
+            {final_context[:100000]}
 
-            Question: {{query}}
+            ### CHAT HISTORY:
+            {history_str}
 
+            Question: {query}
             Answer:
             """
             
-            pipeline = Pipeline()
-            pipeline.add_component("prompt_builder", PromptBuilder(template=prompt_template))
-            pipeline.add_component("llm", GeminiGenerator())
-            pipeline.connect("prompt_builder", "llm")
+            # 4. Generate Answer
+            llm = get_llm(temperature=0.3)
+            response = await llm.ainvoke(formatted_prompt)
             
-            result = await asyncio.to_thread(
-                pipeline.run,
-                {
-                    "prompt_builder": {"context": final_context, "query": query},
-                    "llm": {"tenant_id": tenant_id}
-                }
-            )
-            
-            replies = result.get("llm", {}).get("replies", [])
-            response = replies[0] if replies else "Failed to generate an answer."
-            logger.info(f"RAG: LLM response generated (Length: {len(response)})")
-            return response
+            if tenant_id:
+                await LLMService.log_response_usage(conn, tenant_id, response, input_text=formatted_prompt)
+                
+            return _extract_text(response.content)
 
         except Exception as e:
             logger.error(f"RAG: Query failed: {e}", exc_info=True)
             return f"Error: {e}"
+
+    @staticmethod
+    async def query_with_agent(conn, query: str, tenant_id: uuid.UUID, history: List[Any] = None) -> str:
+        """
+        Agentic RAG orchestrator that:
+        1. Analyzes the user's intent.
+        2. Decomposes the request into multiple optimized search queries.
+        3. Retrieves and aggregates context in parallel.
+        4. Synthesizes a comprehensive final answer.
+        """
+        try:
+            logger.info(f"RAG AGENT: Starting agentic query for tenant {tenant_id}: {query}")
+            from app.services.llm_service import get_llm, LLMService, _extract_text
+            import json
+
+            # 0. Build History string
+            history_str = ""
+            if history:
+                history_parts = []
+                for msg in history:
+                    role = "User" if (getattr(msg, 'role', 'user') == 'user') else "Assistant"
+                    content = getattr(msg, 'content', '')
+                    history_parts.append(f"{role}: {content}")
+                history_str = "\n".join(history_parts)
+            
+            # Step 1: Query Decomposition & Planning
+            plan_prompt = f"""
+            You are an expert Document Search Agent.
+            Analyze the user's question and break it down into up to 3 distinct, highly targeted search queries to search a vector database.
+            
+            ### CHAT HISTORY:
+            {history_str}
+
+            User Question: {query}
+            
+            Return ONLY a JSON array of strings representing the search queries. Example: ["query 1", "query 2"]
+            """
+            
+            llm_plan = get_llm(temperature=0.1).bind(response_mime_type="application/json")
+            plan_response = await llm_plan.ainvoke(plan_prompt)
+            
+            if tenant_id:
+                # Log usage for the planning stage
+                await LLMService.log_response_usage(conn, tenant_id, plan_response, input_text=plan_prompt)
+
+            # Extract generated queries safely
+            text = _extract_text(plan_response.content).strip()
+            if text.startswith('```'):
+                text = text.split('\n', 1)[-1]
+                if text.endswith('```'):
+                    text = text.rsplit('```', 1)[0]
+            
+            try:
+                search_queries = json.loads(text.strip())
+                if not isinstance(search_queries, list):
+                    search_queries = [query]
+            except Exception:
+                search_queries = [query]
+                
+            # Deduplicate and limit to 3 queries to manage latency
+            search_queries = list(dict.fromkeys([str(q) for q in search_queries]))[:3]
+            logger.info(f"RAG AGENT: Generated optimized search queries: {search_queries}")
+            
+            # Step 2: Parallel Retrieval
+            all_chunks = set()
+            
+            retrieve_tasks = [
+                RAGService.retrieve_context(None, tenant_id, sq, limit=4)
+                for sq in search_queries
+            ]
+            results = await asyncio.gather(*retrieve_tasks, return_exceptions=True)
+            
+            for res in results:
+                if isinstance(res, list):
+                    all_chunks.update(res)
+                    
+            context_parts = []
+            if all_chunks:
+                context_parts.append("### Retrieved Document Context:\n" + "\n\n----- \n\n".join(all_chunks))
+                
+            if not context_parts:
+                logger.warning("RAG AGENT: No context found during agentic retrieval.")
+                return "No relevant information found in your documents to answer this question."
+                
+            final_context = "\n\n".join(context_parts)
+            logger.info(f"RAG AGENT: Final aggregated context length: {len(final_context)}")
+            
+            # Step 3: Final Answer Synthesis
+            synthesis_prompt = f"""
+            You are a professional Document Intelligence Agent.
+            Answer the user's question thoroughly based ONLY on the provided context retrieved from multiple searches across their documents.
+            Synthesize the information logically. If the context does not contain the answer, state that clearly.
+            
+            ### UI REPRESENTATION GUIDELINES:
+            1. **Clarity**: Use clear, concise language.
+            2. **Structure**: If the answer involves data, use an HTML table (standard <table> tags with <thead> and <tbody>).
+            3. **Visuals**: If the answer involves trends, comparisons, or distributions, include a JSON block marked as `### DATA_FOR_CHART ###` containing keys: `type` (bar, pie, line), `labels` (array), and `datasets` (array of {{label, data}}).
+            4. **Rich Text**: Use standard HTML for bolding, lists, and headings for better readability in the UI. Do NOT include <html> or <body> tags.
+            
+            Context:
+            {final_context[:100000]}
+            
+            ### CHAT HISTORY:
+            {history_str}
+
+            Question: {query}
+            
+            Answer:
+            """
+            
+            llm_synth = get_llm(temperature=0.3)
+            final_response = await llm_synth.ainvoke(synthesis_prompt)
+            
+            if tenant_id:
+                await LLMService.log_response_usage(conn, tenant_id, final_response, input_text=synthesis_prompt)
+                
+            return _extract_text(final_response.content)
+
+        except Exception as e:
+            logger.error(f"RAG AGENT: Query failed: {e}", exc_info=True)
+            return f"Error executing agent query: {e}"

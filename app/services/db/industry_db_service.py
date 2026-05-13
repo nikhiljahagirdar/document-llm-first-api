@@ -1,4 +1,4 @@
-import psycopg
+import asyncpg
 from typing import List, Optional
 import uuid
 from app.services.db.base_db_service import BaseDBService
@@ -18,17 +18,17 @@ class IndustryDBService(BaseDBService):
                             SELECT subcategory_id, category_id, name, description FROM subcategories WHERE category_id = c.category_id
                         ) sc_data),
                         '[]'::json
-                    ) as subcategories
+                    )::jsonb as subcategories
                 FROM categories c
                 WHERE c.industry_id = i.industry_id
              ) c_data
             ),
             '[]'::json
-        ) as categories
+        )::jsonb as categories
     FROM industries i
     """
 
-    async def list_industries(self, conn: psycopg.AsyncConnection, search: Optional[str] = None) -> List[dict]:
+    async def list_industries(self, conn: asyncpg.Connection, search: Optional[str] = None) -> List[dict]:
         query = self.INDUSTRY_HIERARCHY_QUERY
         params = []
         if search:
@@ -37,11 +37,11 @@ class IndustryDBService(BaseDBService):
         query += " ORDER BY i.name"
         return await self.fetch_all(conn, query, tuple(params))
 
-    async def get_industry(self, conn: psycopg.AsyncConnection, industry_id: uuid.UUID) -> Optional[dict]:
+    async def get_industry(self, conn: asyncpg.Connection, industry_id: uuid.UUID) -> Optional[dict]:
         query = self.INDUSTRY_HIERARCHY_QUERY + " WHERE i.industry_id = %s::uuid"
         return await self.fetch_one(conn, query, (industry_id,))
 
-    async def create_industry(self, conn: psycopg.AsyncConnection, industry_data: dict) -> dict:
+    async def create_industry(self, conn: asyncpg.Connection, industry_data: dict) -> dict:
         industry_id = uuid.uuid4()
         
         columns = ["industry_id"] + list(industry_data.keys())
@@ -52,7 +52,7 @@ class IndustryDBService(BaseDBService):
         await self.execute(conn, query, tuple(values))
         return await self.get_industry(conn, industry_id)
 
-    async def update_industry(self, conn: psycopg.AsyncConnection, industry_id: uuid.UUID, update_data: dict) -> Optional[dict]:
+    async def update_industry(self, conn: asyncpg.Connection, industry_id: uuid.UUID, update_data: dict) -> Optional[dict]:
         if update_data:
             set_clause = ", ".join([f"{k} = %s" for k in update_data.keys()])
             params = list(update_data.values())
@@ -61,11 +61,11 @@ class IndustryDBService(BaseDBService):
         
         return await self.get_industry(conn, industry_id)
 
-    async def delete_industry(self, conn: psycopg.AsyncConnection, industry_id: uuid.UUID) -> bool:
+    async def delete_industry(self, conn: asyncpg.Connection, industry_id: uuid.UUID) -> bool:
         await self.execute(conn, "DELETE FROM industries WHERE industry_id = %s::uuid", (industry_id,))
         return True
 
-    async def get_industry_templates(self, conn: psycopg.AsyncConnection, industry_id: uuid.UUID, tenant_id: Optional[uuid.UUID] = None) -> List[dict]:
+    async def get_industry_templates(self, conn: asyncpg.Connection, industry_id: uuid.UUID, tenant_id: Optional[uuid.UUID] = None) -> List[dict]:
         query = "SELECT * FROM templates WHERE industry_id = %s::uuid"
         if tenant_id:
             query += " AND (tenant_id = %s::uuid OR is_public = TRUE)"

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status, Query
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import NotificationResponse
 from app.dependencies import get_current_user
@@ -28,7 +27,7 @@ async def get_notifications(
     offset: int = 0,
     status: str = Query("all", description="Filter by status: all, read, unread"),
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: NotificationDBService = Depends(get_notification_service)
 ):
     """
@@ -40,7 +39,7 @@ async def get_notifications(
 async def mark_notification_as_read(
     notification_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: NotificationDBService = Depends(get_notification_service)
 ):
     """
@@ -55,7 +54,7 @@ async def mark_notification_as_read(
 @router.post("/read-all")
 async def mark_all_notifications_as_read(
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: NotificationDBService = Depends(get_notification_service)
 ):
     """
@@ -67,7 +66,7 @@ async def mark_all_notifications_as_read(
 @router.post("/test-notify")
 async def create_test_notification(
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: NotificationDBService = Depends(get_notification_service)
 ):
     """
@@ -84,7 +83,7 @@ async def create_test_notification(
 async def delete_notification(
     notification_id: uuid.UUID,
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: NotificationDBService = Depends(get_notification_service)
 ):
     """

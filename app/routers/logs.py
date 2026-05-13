@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.schemas import UsageLogResponse, UsageSummary, AuditLogResponse
 from app.dependencies import get_current_tenant, get_current_user
 from typing import List, Optional, Any
-import psycopg
 from app.db_raw import get_raw_db
 from app.services.db.metering_db_service import MeteringDBService
 from app.services.db.audit_log_db_service import AuditLogDBService
@@ -23,7 +22,7 @@ async def get_my_usage_logs(
     offset: int = 0,
     tenant: Any = Depends(get_current_tenant), 
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: MeteringDBService = Depends(get_metering_service)
 ):
     """
@@ -41,7 +40,7 @@ async def get_my_usage_logs(
 async def get_usage_summary(
     tenant: Any = Depends(get_current_tenant), 
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: MeteringDBService = Depends(get_metering_service)
 ):
     """
@@ -57,7 +56,7 @@ async def log_usage(
     quantity: int, 
     tenant: Any = Depends(get_current_tenant), 
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: MeteringDBService = Depends(get_metering_service)
 ):
     """
@@ -72,7 +71,7 @@ async def get_my_audit_logs(
     limit: int = 50,
     offset: int = 0,
     tenant: Any = Depends(get_current_tenant), 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: AuditLogDBService = Depends(get_audit_log_service)
 ):
     """
@@ -87,7 +86,7 @@ async def create_audit_log(
     resource_id: str = None, 
     details: dict = None,
     tenant: Any = Depends(get_current_tenant), 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: AuditLogDBService = Depends(get_audit_log_service)
 ):
     """

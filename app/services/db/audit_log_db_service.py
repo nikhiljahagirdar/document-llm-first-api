@@ -1,4 +1,4 @@
-import psycopg
+import asyncpg
 from typing import List, Optional
 import uuid
 from datetime import datetime
@@ -6,7 +6,7 @@ import json
 from app.services.db.base_db_service import BaseDBService
 
 class AuditLogDBService(BaseDBService):
-    async def list_logs(self, conn: psycopg.AsyncConnection, tenant_id: uuid.UUID, limit: int = 100, offset: int = 0, search: Optional[str] = None) -> List[dict]:
+    async def list_logs(self, conn: asyncpg.Connection, tenant_id: uuid.UUID, limit: int = 100, offset: int = 0, search: Optional[str] = None) -> List[dict]:
         query = "SELECT * FROM audit_logs WHERE tenant_id = %s::uuid"
         params = [tenant_id]
         if search:
@@ -18,7 +18,7 @@ class AuditLogDBService(BaseDBService):
 
     async def create_log(
         self, 
-        conn: psycopg.AsyncConnection, 
+        conn: asyncpg.Connection, 
         tenant_id: uuid.UUID, 
         action: str, 
         resource_type: str, 
@@ -39,7 +39,7 @@ class AuditLogDBService(BaseDBService):
 
     @staticmethod
     async def record_audit_log(
-        conn: psycopg.AsyncConnection,
+        conn: asyncpg.Connection,
         tenant_id: uuid.UUID,
         user_id: uuid.UUID,
         action: str,

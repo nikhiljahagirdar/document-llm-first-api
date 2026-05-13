@@ -2,6 +2,7 @@ import asyncio
 import uuid
 import sys
 import os
+import json
 import selectors
 from datetime import datetime
 from faker import Faker
@@ -45,7 +46,7 @@ NEW_HIERARCHY = {
             },
             {
               "name": "Accounting",
-              "documents": ["Balance Sheet", "Profit and Loss Statement", "Cash Flow Statement", "Trial Balance", "General Ledger", "Journal Entry", "Expense Report"]
+              "documents": ["Balance Sheet", "Profit and Loss Statement", "Cash Flow Statement", "Trial Balance", "General Ledger", "Journal Entry", "Expense Report", "Bank Statement"]
             },
             {
               "name": "Taxation",
@@ -295,7 +296,7 @@ async def seed_data():
             r_id = uuid.uuid4()
             perms = {"all": True} if r_name == "superadmin" else {"read": True, "write": r_name in ["tenant_admin", "user"]}
             await DBWrapper.execute(conn, 
-                "INSERT INTO roles (role_id, name, permissions, created_on) VALUES (%s, %s, %s, %s)", 
+                "INSERT INTO roles (role_id, name, permissions, created_on) VALUES (%s, %s, %s::jsonb, %s)", 
                 (r_id, r_name, json.dumps(perms), datetime.now()))
             role_map[r_name] = r_id
             print(f"Seeded Role: {r_name}")
@@ -379,7 +380,6 @@ async def seed_data():
 
         # 5. Seed Subscription Plans
         plans = [
-            ("Free", 0.0, "USD", "month", '{"doc_limit": 5, "ai_limit": 10}'),
             ("Pro", 29.0, "USD", "month", '{"doc_limit": 100, "ai_limit": 500}'),
             ("Enterprise", 199.0, "USD", "month", '{"doc_limit": -1, "ai_limit": -1}')
         ]
@@ -387,15 +387,13 @@ async def seed_data():
             existing = await DBWrapper.fetch_one(conn, "SELECT plan_id FROM subscription_plans WHERE name = %s", (p_name,))
             if not existing:
                 await DBWrapper.execute(conn,
-                    "INSERT INTO subscription_plans (plan_id, name, price, currency, billing_cycle, limits) VALUES (%s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO subscription_plans (plan_id, name, price, currency, billing_cycle, limits) VALUES (%s, %s, %s, %s, %s, %s::jsonb)",
                     (uuid.uuid4(), p_name, p_price, p_curr, p_cycle, p_limits))
                 print(f"Seeded Plan: {p_name}")
 
     print("Enhanced seeding complete.")
 
 if __name__ == "__main__":
-    loop_factory = lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()) if sys.platform == 'win32' else None
-    if loop_factory:
-        asyncio.run(seed_data(), loop_factory=loop_factory)
-    else:
-        asyncio.run(seed_data())
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.run(seed_data())

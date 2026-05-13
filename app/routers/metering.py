@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import UsageLogResponse, UsageSummary
 from app.dependencies import get_current_tenant, get_current_user
@@ -16,7 +15,7 @@ async def get_metering_service():
 async def get_my_usage_summary(
     tenant: Any = Depends(get_current_tenant),
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: MeteringDBService = Depends(get_metering_service)
 ):
     """
@@ -33,7 +32,7 @@ async def get_my_usage_logs(
     offset: int = 0,
     tenant: Any = Depends(get_current_tenant),
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: MeteringDBService = Depends(get_metering_service)
 ):
     """
@@ -51,7 +50,7 @@ async def record_custom_usage(
     quantity: int = 1,
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: MeteringDBService = Depends(get_metering_service)
 ):
     """

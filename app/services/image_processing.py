@@ -1,6 +1,7 @@
 import cv2
 import os
 import io
+from typing import Any
 import numpy as np
 from PIL import Image
 import pytesseract
@@ -10,7 +11,6 @@ try:
 except ImportError:
     HAS_PADDLE = False
 
-from .llm_service import get_genai_client, types
 from app.config import settings
 
 # Lazy initialize PaddleOCR to avoid unnecessary overhead
@@ -30,24 +30,28 @@ async def extract_text_from_image_gemini(image_data: bytes, mime_type: str = "im
     Uses Gemini 2.0 Flash as a robust fallback OCR.
     """
     try:
-        from .llm_service import LLMService
-        client = get_genai_client()
+        import base64
+        from langchain_core.messages import HumanMessage
+        from .llm_service import get_llm, LLMService, _extract_text
+        
         actual_mime = "image/png"
         if "jpg" in mime_type or "jpeg" in mime_type: actual_mime = "image/jpeg"
         elif "webp" in mime_type: actual_mime = "image/webp"
 
+        image_base64 = base64.b64encode(image_data).decode("utf-8")
+        
+        llm = get_llm(temperature=0.0)
         prompt = "Extract all text from this image exactly as it appears."
-        response = await client.aio.models.generate_content(
-            model=settings.AI_LLM_MODEL,
-            contents=[
-                types.Part.from_bytes(data=image_data, mime_type=actual_mime),
-                prompt
-            ],
-            config=types.GenerateContentConfig(temperature=0.0)
+        message = HumanMessage(
+            content=[
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:{actual_mime};base64,{image_base64}"}}
+            ]
         )
+        response = await llm.ainvoke([message])
         if tenant_id:
             await LLMService.log_response_usage(conn, tenant_id, response)
-        return {"text": response.text.strip(), "source": "gemini-ocr-fallback"}
+        return {"text": _extract_text(response.content).strip(), "source": "gemini-ocr-fallback"}
     except Exception as e:
         print(f"Gemini Fallback OCR failed: {e}")
         return {"text": "", "error": str(e)}

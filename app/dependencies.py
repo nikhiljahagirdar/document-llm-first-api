@@ -2,7 +2,7 @@ from typing import Optional, Any
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-import psycopg
+import asyncpg
 
 from app import security
 from app.db_raw import get_raw_db, DBWrapper
@@ -43,7 +43,7 @@ class Map(dict):
 
 async def get_current_user(
     token: Optional[str] = Depends(oauth2_scheme),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: asyncpg.Connection = Depends(get_raw_db),
     user_service: UserDBService = Depends(get_user_service),
     x_token: Optional[str] = Header(None, alias="X-Token")
 ) -> Any:
@@ -91,7 +91,7 @@ async def get_current_user(
 
 async def get_optional_user(
     token: Optional[str] = Depends(oauth2_scheme),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: asyncpg.Connection = Depends(get_raw_db),
     user_service: UserDBService = Depends(get_user_service),
     x_token: Optional[str] = Header(None, alias="X-Token")
 ) -> Optional[Any]:
@@ -129,7 +129,7 @@ async def get_optional_user(
 
 async def get_current_tenant(
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: asyncpg.Connection = Depends(get_raw_db),
     tenant_service: TenantDBService = Depends(get_tenant_service)
 ) -> Any:
     """Retrieve the current tenant for the authenticated user using raw SQL."""
@@ -143,7 +143,7 @@ async def get_current_tenant(
 
 async def get_optional_tenant(
     current_user: Optional[Any] = Depends(get_optional_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: asyncpg.Connection = Depends(get_raw_db),
     tenant_service: TenantDBService = Depends(get_tenant_service)
 ) -> Optional[Any]:
     """Retrieve the current tenant if available, otherwise return None."""

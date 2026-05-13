@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Add embedding column to document_versions
-    op.execute("ALTER TABLE document_versions ADD COLUMN IF NOT EXISTS embedding vector(768)")
+    op.execute("ALTER TABLE document_versions ADD COLUMN IF NOT EXISTS embedding vector(3072)")
     # Create an index for faster similarity searches
     op.execute("CREATE INDEX IF NOT EXISTS idx_doc_versions_embedding_ivfflat ON document_versions USING ivfflat (embedding vector_cosine_ops) WITH (lists=100)")
 

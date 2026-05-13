@@ -64,9 +64,9 @@ def upgrade() -> None:
         );
     """)
 
-    # 4. Sync document_chunks embedding dimension (Ensure 768 for current model)
+    # 4. Sync document_chunks embedding dimension (Ensure 3072 for current model)
     # Note: Using execute for vector type as it's an extension
-    op.execute("ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(768)")
+    op.execute("ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(3072)")
 
 
 def downgrade() -> None:

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Document Intelligence API",
-    "description": "\n    # Document Intelligence Platform API\n    \n    A comprehensive SaaS Document Intelligence Platform featuring:\n    - **Document Management**: Upload, organize, and process documents\n    - **AI-Powered Extraction**: Extract insights using advanced LLM capabilities\n    - **RAG (Retrieval-Augmented Generation)**: Intelligent document querying\n    - **Multi-tenancy**: Secure tenant isolation and management\n    - **Real-time Processing**: WebSocket-based status updates\n    - **Industry-Specific Templates**: Tailored document templates by industry\n    \n    ## Authentication\n    \n    This API uses JWT Bearer token authentication. Include the token in the Authorization header:\n    ```\n    Authorization: Bearer <your-jwt-token>\n    ```\n    \n    ## Rate Limiting\n    \n    API requests are rate-limited to ensure fair usage. Limits vary by subscription tier.\n    \n    ## Error Handling\n    \n    The API uses standard HTTP status codes and returns detailed error messages in the response body.\n    \n    ## Versioning\n    \n    Current API version: **v1.0.0**\n    All endpoints are prefixed with `/api/`.\n    ",
+    "description": "# Document Intelligence Platform API #",
     "version": "1.0.0"
   },
   "paths": {

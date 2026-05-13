@@ -1,11 +1,11 @@
-import psycopg
+import asyncpg
 from typing import List, Optional, Any
 import uuid
 from datetime import datetime, timedelta
 from app.services.db.base_db_service import BaseDBService
 
 class AdminDBService(BaseDBService):
-    async def get_platform_metrics(self, conn: psycopg.AsyncConnection) -> dict:
+    async def get_platform_metrics(self, conn: asyncpg.Connection) -> dict:
         """
         Retrieve comprehensive platform metrics.
         """
@@ -70,11 +70,11 @@ class AdminDBService(BaseDBService):
             }
         }
 
-    async def get_failed_payments(self, conn: psycopg.AsyncConnection, limit: int = 50, offset: int = 0) -> List[dict]:
+    async def get_failed_payments(self, conn: asyncpg.Connection, limit: int = 50, offset: int = 0) -> List[dict]:
         query = "SELECT * FROM invoices WHERE status = 'failed' ORDER BY created_on DESC LIMIT %s OFFSET %s"
         return await self.fetch_all(conn, query, (limit, offset))
 
-    async def list_all_tenants(self, conn: psycopg.AsyncConnection, search: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[dict]:
+    async def list_all_tenants(self, conn: asyncpg.Connection, search: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[dict]:
         query = """
             SELECT t.*, s.status as subscription_status, p.name as plan_name
             FROM tenants t
@@ -91,7 +91,7 @@ class AdminDBService(BaseDBService):
         
         return await self.fetch_all(conn, query, tuple(params))
 
-    async def suspend_tenant(self, conn: psycopg.AsyncConnection, tenant_id: str) -> bool:
+    async def suspend_tenant(self, conn: asyncpg.Connection, tenant_id: str) -> bool:
         existing = await self.fetch_one(conn, "SELECT 1 FROM tenants WHERE tenant_id::uuid = %s::uuid", (tenant_id,))
         if not existing:
             return False

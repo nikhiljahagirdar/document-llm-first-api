@@ -1,11 +1,11 @@
-import psycopg
+import asyncpg
 import json
 from typing import List, Optional, Any
 import uuid
 from app.services.db.base_db_service import BaseDBService
 
 class RoleDBService(BaseDBService):
-    async def list_roles(self, conn: psycopg.AsyncConnection, tenant_id: uuid.UUID, limit: int = 100, offset: int = 0, search: Optional[str] = None) -> List[dict]:
+    async def list_roles(self, conn: asyncpg.Connection, tenant_id: uuid.UUID, limit: int = 100, offset: int = 0, search: Optional[str] = None) -> List[dict]:
         """
         Retrieve all roles applicable to the current tenant.
         Includes both system-wide roles (tenant_id IS NULL) and tenant-specific custom roles.
@@ -25,34 +25,34 @@ class RoleDBService(BaseDBService):
         
         return await self.fetch_all(conn, query, tuple(params))
 
-    async def get_role(self, conn: psycopg.AsyncConnection, role_id: uuid.UUID) -> Optional[dict]:
+    async def get_role(self, conn: asyncpg.Connection, role_id: uuid.UUID) -> Optional[dict]:
         query = "SELECT * FROM roles WHERE role_id = %s::uuid"
         return await self.fetch_one(conn, query, (role_id,))
 
-    async def get_tenant_role(self, conn: psycopg.AsyncConnection, role_id: uuid.UUID, tenant_id: uuid.UUID) -> Optional[dict]:
+    async def get_tenant_role(self, conn: asyncpg.Connection, role_id: uuid.UUID, tenant_id: uuid.UUID) -> Optional[dict]:
         stmt = "SELECT * FROM roles WHERE role_id = %s::uuid AND tenant_id = %s::uuid"
         return await self.fetch_one(conn, stmt, (role_id, tenant_id))
 
-    async def get_role_by_name_and_tenant(self, conn: psycopg.AsyncConnection, name: str, tenant_id: uuid.UUID) -> Optional[dict]:
+    async def get_role_by_name_and_tenant(self, conn: asyncpg.Connection, name: str, tenant_id: uuid.UUID) -> Optional[dict]:
         stmt = """
             SELECT 1 FROM roles 
             WHERE name = %s AND (tenant_id = %s::uuid OR tenant_id IS NULL)
         """
         return await self.fetch_one(conn, stmt, (name, tenant_id))
 
-    async def create_role(self, conn: psycopg.AsyncConnection, tenant_id: uuid.UUID, name: str, permissions: Any) -> dict:
+    async def create_role(self, conn: asyncpg.Connection, tenant_id: uuid.UUID, name: str, permissions: Any) -> dict:
         query = """
             INSERT INTO roles (role_id, tenant_id, name, permissions)
             VALUES (%s::uuid, %s::uuid, %s, %s)
             RETURNING *
         """
         new_id = uuid.uuid4()
-        # psycopg3 handles dict to JSON conversion if we pass it directly
+        # asyncpg handles dict to JSON conversion if we pass it directly
         return await self.execute_returning(conn, query, (
             new_id, tenant_id, name, json.dumps(permissions) if isinstance(permissions, (dict, list)) else permissions
         ))
 
-    async def update_role(self, conn: psycopg.AsyncConnection, role_id: uuid.UUID, update_data: dict) -> Optional[dict]:
+    async def update_role(self, conn: asyncpg.Connection, role_id: uuid.UUID, update_data: dict) -> Optional[dict]:
         if not update_data:
             return await self.get_role(conn, role_id)
         
@@ -69,11 +69,11 @@ class RoleDBService(BaseDBService):
         params = list(processed_data.values()) + [role_id]
         return await self.execute_returning(conn, query, tuple(params))
 
-    async def delete_role(self, conn: psycopg.AsyncConnection, role_id: uuid.UUID) -> bool:
+    async def delete_role(self, conn: asyncpg.Connection, role_id: uuid.UUID) -> bool:
         query = "DELETE FROM roles WHERE role_id = %s::uuid RETURNING role_id"
         result = await self.fetch_one(conn, query, (role_id,))
         return result is not None
 
-    async def is_role_assigned_to_users(self, conn: psycopg.AsyncConnection, role_id: uuid.UUID) -> bool:
+    async def is_role_assigned_to_users(self, conn: asyncpg.Connection, role_id: uuid.UUID) -> bool:
         user_check = await self.fetch_one(conn, "SELECT 1 FROM users WHERE role_id = %s::uuid", (role_id,))
         return user_check is not None

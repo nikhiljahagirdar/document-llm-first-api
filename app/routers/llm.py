@@ -3,7 +3,6 @@ import uuid
 import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Body, status
-import psycopg
 from pydantic import BaseModel, Field
 
 from app.schemas import (
@@ -19,7 +18,7 @@ from app.dependencies import get_current_user
 from app.services.rag_service import RAGService
 from app.services.llm_service import LLMService
 from app.services.render_service import generate_docx_template
-from app.services.storage_service import upload_bytes_to_s3
+from app.services.storage_service import upload_bytes_to_s3, get_s3_key_from_url, generate_presigned_url
 from app.services.db.industry_db_service import IndustryDBService
 from app.services.db.template_db_service import TemplateDBService
 from app.services.db.document_db_service import DocumentDBService
@@ -29,12 +28,18 @@ from app.services.db.subcategory_db_service import SubcategoryDBService
 router = APIRouter(prefix="/llm", tags=["AI & LLM Services"])
 
 
+class ChatMessage(BaseModel):
+    role: str = Field(..., description="Role: 'user' or 'assistant'")
+    content: str = Field(..., description="The message content")
+
 class ChatDocumentRequest(BaseModel):
     document_id: uuid.UUID = Field(..., description="The ID of the document to chat with")
     user_input: str = Field(..., description="The user's question or message")
+    history: Optional[List[ChatMessage]] = Field(default_factory=list, description="Optional chat history for context")
 
 class ChatRAGRequest(BaseModel):
     user_input: str = Field(..., description="The user's question or message")
+    history: Optional[List[ChatMessage]] = Field(default_factory=list, description="Optional chat history for context")
 
 
 async def get_industry_service():
@@ -57,10 +62,33 @@ async def get_subcategory_service():
     return SubcategoryDBService()
 
 
+@router.get("/rag-health", tags=["AI & LLM Services"])
+async def check_rag_health(
+    conn: Any = Depends(get_raw_db)
+):
+    """
+    **Check RAG Database Health**
+
+    Tests the database connection to the PostgreSQL database
+    and returns the total number of document chunks currently indexed.
+    """
+    try:
+        from app.db_raw import DBWrapper
+        result = await DBWrapper.fetch_one(conn, "SELECT COUNT(*) as count FROM document_chunks")
+        doc_count = result["count"] if result else 0
+        return {
+            "status": "connected",
+            "vector_database": "pgvector",
+            "total_chunks_indexed": doc_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"RAG Database connection failed: {e}")
+
+
 @router.post("/detect-industry", response_model=IndustryDetectionResponse)
 async def detect_document_industry(
     request: IndustryDetectionRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: IndustryDBService = Depends(get_industry_service),
     sub_service: SubcategoryDBService = Depends(get_subcategory_service),
@@ -113,13 +141,16 @@ async def detect_document_industry(
             # We don't want to fail the whole request if only the DB update fails
             print(f"DEBUG: Failed to update document classification: {e}")
 
+    if "error" in detection and "LIMIT_REACHED" in detection["error"]:
+        raise HTTPException(status_code=403, detail=detection["error"])
+
     return detection
 
 
 @router.post("/generate", response_model=DocumentGenerationResponse)
 async def generate_document(
     request: DocumentGenerationRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     service: TemplateDBService = Depends(get_template_service),
     ind_service: IndustryDBService = Depends(get_industry_service),
@@ -195,6 +226,9 @@ async def generate_document(
         override_prompt=subcategory_prompt,
     )
 
+    if isinstance(generated_content, str) and "LIMIT_REACHED" in generated_content:
+        raise HTTPException(status_code=403, detail="LIMIT_REACHED: AI Usage token limit exceeded. Please upgrade your plan.")
+
     # 4. Produce .docx and upload to S3
     docx_data = {
         "template_name": template.get("template_name") or template.get("name"),
@@ -241,17 +275,19 @@ async def generate_document(
     }
     await report_service.create_report(conn, report_data)
 
+    presigned_url = generate_presigned_url(get_s3_key_from_url(document_url)) or document_url
+
     return {
         "content": generated_content,
         "template_id": template["template_id"],
-        "document_url": document_url,
+        "document_url": presigned_url,
     }
 
 
 @router.post("/analyze-multimodal")
 async def analyze_multimodal(
     request: MultimodalAnalysisRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
 ):
     """
@@ -263,13 +299,17 @@ async def analyze_multimodal(
     analysis = await LLMService.analyze_multimodal(
         request.text, request.image_urls, current_user.tenant_id, conn
     )
+    if isinstance(analysis, str) and "LIMIT_REACHED" in analysis:
+        raise HTTPException(status_code=403, detail="LIMIT_REACHED: AI Usage token limit exceeded.")
+    if isinstance(analysis, dict) and "error" in analysis and "LIMIT_REACHED" in analysis["error"]:
+        raise HTTPException(status_code=403, detail=analysis["error"])
     return {"analysis": analysis}
 
 
 @router.get("/documents/{document_id}/suggestions")
 async def get_document_suggestions(
     document_id: uuid.UUID,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     doc_service: DocumentDBService = Depends(get_document_service),
 ):
@@ -294,6 +334,10 @@ async def get_document_suggestions(
     raw_suggestions = await LLMService.generate_suggestions(
         context, current_user.tenant_id, conn, current_user.user_id
     )
+    if raw_suggestions and isinstance(raw_suggestions, list) and len(raw_suggestions) > 0:
+        if "LIMIT_REACHED" in raw_suggestions[0]:
+            raise HTTPException(status_code=403, detail=raw_suggestions[0])
+            
     suggestions = [{"label": s, "type": "insight"} for s in raw_suggestions]
     return {"suggestions": suggestions}
 
@@ -301,7 +345,7 @@ async def get_document_suggestions(
 @router.post("/chat/summarize")
 async def summarize_chat(
     body: Dict[str, Any] = Body(...),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
 ):
     """
@@ -329,13 +373,15 @@ async def summarize_chat(
     summary = await LLMService.summarize_text(
         str(text_to_summarize), current_user.tenant_id, conn
     )
+    if isinstance(summary, str) and "LIMIT_REACHED" in summary:
+        raise HTTPException(status_code=403, detail="LIMIT_REACHED: AI Usage token limit exceeded. Please upgrade your plan.")
     return {"summary": summary}
 
 
 @router.post("/chat/document", response_model=DocumentChatResponse)
 async def chat_with_document(
     request: ChatDocumentRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     doc_service: DocumentDBService = Depends(get_document_service),
 ):
@@ -376,7 +422,11 @@ async def chat_with_document(
         query=user_input,
         tenant_id=current_user.tenant_id,
         document_id=document_id,
+        history=request.history
     )
+
+    if isinstance(ai_response, str) and "LIMIT_REACHED" in ai_response:
+        raise HTTPException(status_code=403, detail="LIMIT_REACHED: AI Usage token limit exceeded.")
 
     # Extract chart data if present
     chart_data = None
@@ -423,19 +473,22 @@ async def chat_with_document(
 @router.post("/rag-agent", response_model=DocumentChatResponse)
 async def general_rag_agent(
     request: ChatRAGRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
 ):
     """
     **General Knowledge Agent (Tenant-wide RAG)**
 
     Queries across ALL documents belonging to the current tenant.
-    Identifies relevant information from multiple sources to provide a unified answer
+    Acts as an intelligent agent to decompose the query, search multiple times, and provide a unified answer
     and **intelligent follow-up suggestions**.
     """
-    ai_response = await RAGService.query_with_rag(
-        conn=conn, query=request.user_input, tenant_id=current_user.tenant_id
+    ai_response = await RAGService.query_with_agent(
+        conn=conn, query=request.user_input, tenant_id=current_user.tenant_id, history=request.history
     )
+
+    if isinstance(ai_response, str) and "LIMIT_REACHED" in ai_response:
+        raise HTTPException(status_code=403, detail="LIMIT_REACHED: AI Usage token limit exceeded.")
 
     # Extract chart data if present
     chart_data = None

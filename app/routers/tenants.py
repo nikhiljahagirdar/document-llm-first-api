@@ -3,7 +3,6 @@ API router for tenant management using raw SQL.
 """
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
-import psycopg
 import json
 
 from app.db_raw import get_raw_db
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/tenants", tags=["tenants"])
 @router.post("/register", response_model=TenantResponse)
 async def register_tenant(
     tenant: TenantBase, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: TenantDBService = Depends(get_tenant_service)
 ):
     """
@@ -42,7 +41,7 @@ async def register_tenant(
 
 @router.get("/dashboard")
 async def get_tenant_dashboard(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     tenant: Any = Depends(get_current_tenant),
     service: TenantDBService = Depends(get_tenant_service)
 ):
@@ -63,7 +62,7 @@ async def get_tenant_dashboard(
 @router.get("/{tenant_id}/settings")
 async def get_tenant_settings(
     tenant_id: str, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: TenantDBService = Depends(get_tenant_service)
 ):
     """
@@ -78,7 +77,7 @@ async def get_tenant_settings(
 async def update_tenant_settings(
     tenant_id: str, 
     config: dict, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: TenantDBService = Depends(get_tenant_service)
 ):
     """

@@ -3,7 +3,6 @@ API router for Role-Based Access Control (RBAC).
 Provides endpoints for managing user roles and permissions within a tenant.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 import uuid
 from typing import List, Optional, Any
 from app.db_raw import get_raw_db
@@ -22,7 +21,7 @@ require_tenant_admin = RoleChecker(["enterprise_tenant", "superadmin"])
 
 @router.get("", response_model=List[RoleResponse])
 async def get_tenant_roles(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     tenant: Any = Depends(get_current_tenant),
     service: RoleDBService = Depends(get_role_service),
     limit: int = 100,
@@ -38,7 +37,7 @@ async def get_tenant_roles(
 @router.post("", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
 async def create_custom_role(
     role_in: RoleCreate,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     user: Any = Depends(require_tenant_admin),
     tenant: Any = Depends(get_current_tenant),
     service: RoleDBService = Depends(get_role_service)
@@ -59,7 +58,7 @@ async def create_custom_role(
 async def update_custom_role(
     role_id: uuid.UUID,
     role_in: RoleUpdate,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     user: Any = Depends(require_tenant_admin),
     tenant: Any = Depends(get_current_tenant),
     service: RoleDBService = Depends(get_role_service)
@@ -84,7 +83,7 @@ async def update_custom_role(
 @router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_custom_role(
     role_id: uuid.UUID,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     user: Any = Depends(require_tenant_admin),
     tenant: Any = Depends(get_current_tenant),
     service: RoleDBService = Depends(get_role_service)

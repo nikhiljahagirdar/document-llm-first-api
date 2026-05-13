@@ -23,7 +23,7 @@ if config.config_file_name is not None:
 # Set the sqlalchemy.url dynamically
 database_url = os.getenv("DATABASE_URL")
 if database_url:
-    # Ensure it's compatible with SQLAlchemy (Alembic needs postgresql:// or postgresql+psycopg2://)
+    # Ensure it's compatible with SQLAlchemy (Alembic needs postgresql:// or postgresql+psycopg22://)
     if database_url.startswith("postgresql+asyncpg://"):
         database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
     config.set_main_option("sqlalchemy.url", database_url)

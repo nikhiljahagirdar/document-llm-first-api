@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import InvoiceResponse, TenantResponse
 from app.dependencies import get_superadmin
@@ -17,7 +16,7 @@ async def get_admin_service():
 
 @router.get("/metrics")
 async def get_platform_metrics(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: AdminDBService = Depends(get_admin_service)
 ):
     """
@@ -29,7 +28,7 @@ async def get_platform_metrics(
 async def get_failed_payments(
     limit: int = 50,
     offset: int = 0,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: AdminDBService = Depends(get_admin_service)
 ):
     return await service.get_failed_payments(conn, limit, offset)
@@ -39,7 +38,7 @@ async def list_all_tenants(
     search: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: AdminDBService = Depends(get_admin_service)
 ):
     return await service.list_all_tenants(conn, search, limit, offset)
@@ -47,7 +46,7 @@ async def list_all_tenants(
 @router.post("/tenants/{tenant_id}/suspend")
 async def suspend_tenant(
     tenant_id: str, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: AdminDBService = Depends(get_admin_service)
 ):
     success = await service.suspend_tenant(conn, tenant_id)

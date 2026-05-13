@@ -27,8 +27,6 @@ async def test_rag():
         print(response)
 
 if __name__ == "__main__":
-    loop_factory = lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()) if sys.platform == 'win32' else None
-    if loop_factory:
-        asyncio.run(test_rag(), loop_factory=loop_factory)
-    else:
-        asyncio.run(test_rag())
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.run(test_rag())

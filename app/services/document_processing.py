@@ -24,7 +24,8 @@ def get_docling_converter():
         # Enable OCR via Docling. 
         # Using RapidOCR or Tesseract depending on what's available in environment.
         pipeline_options = PdfPipelineOptions(
-            do_ocr=True,
+            do_ocr=False,  # Bypass heavy ONNX-based RapidOCR to prevent bad allocation errors on Windows
+            do_table_structure=False, # Table structure is also heavy
             generate_page_images=False,
             generate_picture_images=False,
         )
@@ -188,12 +189,11 @@ async def process_document_to_html_ai_fallback(
     """
     Uses Gemini to convert ANY document to a page-by-page HTML dictionary.
     """
-    from app.services.llm_service import get_genai_client, LLMService
-    from app.config import settings
-    from google.genai import types
+    from app.services.llm_service import get_llm, LLMService, _extract_text
+    from langchain_core.messages import HumanMessage
+    import base64
 
     try:
-        client = get_genai_client()
 
         # Standard Gemini MIME types
         mime_map = {
@@ -213,6 +213,7 @@ async def process_document_to_html_ai_fallback(
 
         with open(file_path, "rb") as f:
             file_data = f.read()
+        file_base64 = base64.b64encode(file_data).decode("utf-8")
 
         prompt = """
         Analyze the provided document and convert its entire content into HTML use Tables div etc based on the data  smartly analyze.
@@ -223,20 +224,20 @@ async def process_document_to_html_ai_fallback(
         5. Do NOT include <html>, <head>, or <body> tags. The HTML must be safe to embed directly inside a React component (e.g., wrap each page in a <div>).
         """
 
-        response = await client.aio.models.generate_content(
-            model=settings.AI_LLM_MODEL,
-            contents=[
-                types.Part.from_bytes(data=file_data, mime_type=mime_type),
-                prompt,
-            ],
-            config=types.GenerateContentConfig(response_mime_type="application/json"),
+        llm = get_llm(temperature=0.1).bind(response_mime_type="application/json")
+        message = HumanMessage(
+            content=[
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{file_base64}"}}
+            ]
         )
+        response = await llm.ainvoke([message])
 
         if tenant_id:
             await LLMService.log_response_usage(conn, tenant_id, response)
 
         try:
-            text = response.text.strip()
+            text = _extract_text(response.content).strip()
             if text.startswith('```'):
                 lines = text.split('\n')
                 if lines[0].startswith('```'):
@@ -247,7 +248,7 @@ async def process_document_to_html_ai_fallback(
             raw_json = json.loads(text)
             return {int(k): v for k, v in raw_json.items()}
         except:
-            return {1: f"<div>{response.text}</div>"}
+            return {1: f"<div>{_extract_text(response.content)}</div>"}
 
     except Exception as e:
         print(f"AI HTML fallback failed: {e}")
@@ -364,6 +365,8 @@ async def process_document(file_path: str, file_extension: str, tenant_id: uuid.
     page_count = 1
     file_type = ext.lstrip('.')
     metadata = {}
+    markdown_text = ""
+    rich_content = {}
     
     try:
         # 1. Fast-path for CSV and Excel (more reliable than Docling for these)
@@ -388,29 +391,44 @@ async def process_document(file_path: str, file_extension: str, tenant_id: uuid.
         # 2. Extract metadata and page count for PDFs using PyMuPDF
         if ext == ".pdf":
             try:
-                doc = fitz.open(file_path)
-                page_count = doc.page_count
-                metadata = doc.metadata
-                doc.close()
+                fitz_doc = fitz.open(file_path)
+                page_count = fitz_doc.page_count
+                metadata = fitz_doc.metadata
+                
+                # Detect if it's a text-based PDF
+                total_text = ""
+                for page in fitz_doc:
+                    total_text += page.get_text()
+                
+                # If we have substantial text, we can skip Docling (which is heavy)
+                # Unless it's explicitly requested or we need complex layout extraction.
+                if len(total_text.strip()) > 100 * page_count:
+                    print(f"INFO: High text density detected ({len(total_text)} chars). Using PyMuPDF fast-path.")
+                    markdown_text = total_text
+                    source = "pymupdf-fast"
+                    fitz_doc.close()
+                else:
+                    print(f"INFO: Low text density or scanned PDF detected. Using Docling.")
+                    fitz_doc.close()
             except Exception as e:
                 print(f"PyMuPDF pre-check failed: {e}. Proceeding with Docling.")
 
-        # 3. Use Docling for OCR, images, and Office documents
-        print(f"INFO: Using Docling for full extraction ({ext})...")
-        markdown_text = ""
-        rich_content = {}
-        source = f"docling-{ext.lstrip('.')}"
-        
-        try:
-            converter = get_docling_converter()
-            result = await asyncio.to_thread(converter.convert, file_path)
-            doc = result.document
-            markdown_text = doc.export_to_markdown()
-            rich_content = doc.export_to_dict()
-            page_count = doc.page_count if hasattr(doc, 'page_count') and doc.page_count > 0 else 1
-        except Exception as e:
-            print(f"DEBUG: Docling failed for {ext}: {e}. Trying fallback...")
-            source = "fallback"
+        # 3. Use Docling for scanned PDFs, images, and Office documents
+        if not markdown_text:
+            print(f"INFO: Using Docling for full extraction ({ext})...")
+            rich_content = {}
+            source = f"docling-{ext.lstrip('.')}"
+            
+            try:
+                converter = get_docling_converter()
+                result = await asyncio.to_thread(converter.convert, file_path)
+                doc = result.document
+                markdown_text = doc.export_to_markdown()
+                rich_content = doc.export_to_dict()
+                page_count = doc.page_count if hasattr(doc, 'page_count') and doc.page_count > 0 else 1
+            except Exception as e:
+                print(f"DEBUG: Docling failed for {ext}: {e}. Trying fallback...")
+                source = "fallback"
 
         # 4. Fallback logic if Docling returns empty or failed
         if not markdown_text.strip():
@@ -418,6 +436,17 @@ async def process_document(file_path: str, file_extension: str, tenant_id: uuid.
             if ext == ".docx":
                 markdown_text = await asyncio.to_thread(extract_docx_text, file_path)
                 source = "fallback-docx"
+            elif ext == ".pdf":
+                try:
+                    fitz_doc = fitz.open(file_path)
+                    text_parts = []
+                    for page in fitz_doc:
+                        text_parts.append(page.get_text())
+                    markdown_text = "\n\n".join(text_parts)
+                    fitz_doc.close()
+                    source = "fallback-pdf-pymupdf"
+                except Exception as fe:
+                    print(f"PyMuPDF text fallback failed: {fe}")
             # (CSV and Excel are already handled above)
         
         if not markdown_text.strip():

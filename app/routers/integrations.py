@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-import psycopg
 from app.db_raw import get_raw_db, DBWrapper
 from app.dependencies import get_current_user
 from app.config import settings
@@ -58,7 +57,7 @@ async def get_google_auth_url(current_user: Any = Depends(get_current_user)):
 async def google_callback(
     request: CallbackRequest,
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db)
+    conn: Any = Depends(get_raw_db)
 ):
     """
     Exchanges the authorization code for tokens and stores them securely.
@@ -106,7 +105,7 @@ async def google_callback(
 async def sync_google_drive(
     background_tasks: BackgroundTasks,
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db)
+    conn: Any = Depends(get_raw_db)
 ):
     """
     Synchronizes Google Drive files with the platform.
@@ -197,9 +196,9 @@ async def sync_google_drive(
             # We can't easily call the route function here due to Depends.
             
             # Let's add a specialized background task for Drive Syncing
-            from app.routers.documents import process_google_import_background
+            from app.services.document_workflow_service import DocumentWorkflowService
             background_tasks.add_task(
-                process_google_import_background,
+                DocumentWorkflowService.process_google_import_background,
                 g_id, g_name, g_modified, current_user.tenant_id, current_user.user_id, access_token
             )
             synced_count += 1
@@ -209,7 +208,7 @@ async def sync_google_drive(
 @router.get("/google/status")
 async def get_google_auth_status(
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db)
+    conn: Any = Depends(get_raw_db)
 ):
     """
     Checks if the user has an active Google Drive authorization.
@@ -226,7 +225,7 @@ async def get_google_auth_status(
 @router.get("/google/files", response_model=List[GoogleFile])
 async def list_google_drive_files(
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db)
+    conn: Any = Depends(get_raw_db)
 ):
     """
     Lists the user's Google Docs and PDFs from Drive.

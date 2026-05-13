@@ -14,13 +14,14 @@ try:
 except ImportError:
     print(f"\nERROR: Missing dependencies in current environment.")
     print(f"Python Executable: {sys.executable}")
-    print("\nPlease ensure you are using the virtual environment:")
+    print("\nPlease ensure you are using the Python 3.14 virtual environment:")
+    print("  python3.14 -m venv venv")
     print("  .\\venv\\Scripts\\python.exe -m pip install -r requirements.txt")
     print("  .\\venv\\Scripts\\python.exe main.py\n")
     sys.exit(1)
 
-# Fix for Psycopg3 on Windows: Must use SelectorEventLoop
-# Note: set_event_loop_policy is deprecated in 3.14+, we use loop_factory in asyncio.run below.
+# Migration from psycopg to asyncpg completed.
+# SelectorEventLoop is still used for Windows compatibility.
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
@@ -34,7 +35,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from contextlib import asynccontextmanager
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.backends.inmemory import InMemoryBackend
 from redis import asyncio as aioredis
 
 # Import production middleware
@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
     # Initialize Raw DB Pool
     try:
         await get_pool()
-        logger.info("Psycopg3 Raw DB Pool opened.")
+        logger.info("asyncpg Connection Pool opened.")
     except Exception as e:
         logger.warning(f"Failed to open raw DB pool: {e}")
 
@@ -98,55 +98,33 @@ async def lifespan(app: FastAPI):
             FastAPICache.init(RedisBackend(redis_instance), prefix="fastapi-cache")
             logger.info("Redis Cache initialized successfully.")
         except Exception as e:
-            logger.warning(f"Redis enabled but not reachable, falling back to InMemoryBackend: {e}")
-            FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
+            logger.warning(f"Redis enabled but not reachable. Document caching will be bypassed: {e}")
     else:
-        logger.info("Redis disabled via USE_REDIS, using InMemoryBackend for cache.")
-        FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
-    
-    # Run background retry job
-    asyncio.create_task(retry_failed_documents())
+        logger.info("Redis disabled via USE_REDIS. Document caching will be bypassed.")
     
     # Store Redis instance in app state for middleware access
     app.state.redis_client = redis_instance
     
+    # Start Background Persistence Cron Tasks
+    logger.info("Starting Background Retry Scheduler for Failed/Stuck Documents...")
+    bg_retry_task = asyncio.create_task(retry_failed_documents())
+    app.state.bg_retry_task = bg_retry_task
+    
     yield
+    
+    # Shutdown logic
+    logger.info("Cancelling background tasks during shutdown...")
+    bg_retry_task.cancel()
+    try:
+        await bg_retry_task
+    except asyncio.CancelledError:
+        pass
     await close_pool()
     logger.info("Application shutdown: Raw DB Pool closed.")
 
 app = FastAPI(
     title="Document Intelligence API",
-    description="""
-    # Document Intelligence Platform API
-    
-    A comprehensive SaaS Document Intelligence Platform featuring:
-    - **Document Management**: Upload, organize, and process documents
-    - **AI-Powered Extraction**: Extract insights using advanced LLM capabilities
-    - **RAG (Retrieval-Augmented Generation)**: Intelligent document querying
-    - **Multi-tenancy**: Secure tenant isolation and management
-    - **Real-time Processing**: WebSocket-based status updates
-    - **Industry-Specific Templates**: Tailored document templates by industry
-    
-    ## Authentication
-    
-    This API uses JWT Bearer token authentication. Include the token in the Authorization header:
-    ```
-    Authorization: Bearer <your-jwt-token>
-    ```
-    
-    ## Rate Limiting
-    
-    API requests are rate-limited to ensure fair usage. Limits vary by subscription tier.
-    
-    ## Error Handling
-    
-    The API uses standard HTTP status codes and returns detailed error messages in the response body.
-    
-    ## Versioning
-    
-    Current API version: **v1.0.0**
-    All endpoints are prefixed with `/api/`.
-    """,
+    description="A comprehensive SaaS Document Intelligence Platform API.",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -530,7 +508,8 @@ async def start_server():
     # Prioritize 8001 as requested by the frontend logs
     port = get_available_port(8001)
     logger.info("Starting server on port %s...", port)
-    logger.info("WebSocket URL: ws://localhost:%s/api/notifications/ws/{user_id}", port)
+    ws_url = settings.WEBSOCKET_URL or f"ws://localhost:{port}/api/notifications/ws/{{user_id}}"
+    logger.info("WebSocket URL: %s", ws_url)
     
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
     server = uvicorn.Server(config)
@@ -545,10 +524,10 @@ if __name__ == "__main__":
     import selectors
     loop_factory = None
     
-    # REQUIRED for Psycopg3 async mode on Windows
+    # REQUIRED for async mode on Windows
     if sys.platform == 'win32':
         loop_factory = lambda: asyncio.SelectorEventLoop(selectors.SelectSelector())
-        logger.info("Using SelectorEventLoop for Windows compatibility with Psycopg3.")
+        logger.info("Using SelectorEventLoop for Windows compatibility.")
     
     try:
         asyncio.run(start_server(), loop_factory=loop_factory)

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-import psycopg
 import logging
 from app.db_raw import get_raw_db
 from app.schemas import UserResponse, UserCreate, UserUpdate, Token, UserRegisterResponse, GoogleAuthRequest
@@ -52,7 +51,7 @@ async def get_tenant_service():
 )
 async def register_user(
     user_data: UserCreate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: UserDBService = Depends(get_user_service),
     tenant_service: TenantDBService = Depends(get_tenant_service)
 ):
@@ -139,7 +138,7 @@ async def register_user(
 )
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: UserDBService = Depends(get_user_service)
 ):
     user = await service.get_user_by_email(conn, form_data.username)
@@ -218,7 +217,7 @@ async def read_users_me(current_user: Any = Depends(get_current_user)):
 async def update_user_me(
     user_update: UserUpdate,
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: UserDBService = Depends(get_user_service)
 ):
     update_data = user_update.model_dump(exclude_unset=True)
@@ -239,32 +238,37 @@ async def update_user_me(
     return updated_user
 
 @router.get(
-    "/", 
+    "", 
     response_model=List[UserResponse],
     responses={
         401: {"$ref": "#/components/responses/UnauthorizedError"},
         403: {"$ref": "#/components/responses/ForbiddenError"},
         500: {"$ref": "#/components/responses/InternalServerError"}
     },
-    summary="List all users in tenant",
+    summary="List all users",
     description="""
-    Retrieve a list of all users belonging to the current user's tenant.
-    Requires appropriate permissions to view other users.
-    
-    **Requirements:**
-    - Valid JWT token required
-    - Sufficient role permissions (admin or manager)
-    - User account must be active
-    
-    **Response:** Returns list of user profiles within the tenant.
+    Retrieve a list of users. 
+    - **Tenant Admin:** Locked to users within their own tenant.
+    - **Super Admin:** Can optionally provide a `tenant_id` query parameter to filter, or see all users if omitted.
     """
 )
 async def list_tenant_users(
+    tenant_id: Optional[uuid.UUID] = None,
     current_user: Any = Depends(get_current_user),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: UserDBService = Depends(get_user_service)
 ):
-    return await service.list_tenant_users(conn, current_user.tenant_id)
+    # Check if user is superadmin
+    is_superadmin = current_user.role and current_user.role.key in ["super_admin", "superadmin"]
+    
+    if is_superadmin:
+        # Superadmin can see anyone, or filter by tenant if provided
+        target_tenant_id = tenant_id
+    else:
+        # Everyone else is locked to their own tenant
+        target_tenant_id = current_user.tenant_id
+        
+    return await service.list_tenant_users(conn, target_tenant_id)
 
 
 @router.post(
@@ -279,7 +283,7 @@ async def list_tenant_users(
 )
 async def google_auth(
     auth_request: GoogleAuthRequest,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: UserDBService = Depends(get_user_service),
     tenant_service: TenantDBService = Depends(get_tenant_service)
 ):

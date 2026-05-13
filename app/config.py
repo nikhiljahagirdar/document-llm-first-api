@@ -37,6 +37,23 @@ class Settings(BaseModel):
     AI_EXTRACTION_PROMPT: str = os.getenv("AI_EXTRACTION_PROMPT", "Focus on identifying tables and key-value pairs.")
     AI_SUMMARIZATION_PROMPT: str = os.getenv("AI_SUMMARIZATION_PROMPT", "Provide a concise summary of the document.")
     AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", 0.1))
+
+    # AI Template Prompts
+    AI_TEMPLATE_SYSTEM_PROMPT: str = os.getenv("AI_TEMPLATE_SYSTEM_PROMPT", "You are an expert Document Template Architect. Your task is to design a high-quality, professional document template.")
+    AI_TEMPLATE_USER_PROMPT_FORMAT: str = os.getenv("AI_TEMPLATE_USER_PROMPT_FORMAT", "Task: Create a professional document template based on the following user request:\n---\n{user_prompt}\n---\n\n### REQUIREMENTS:\n1. SCHEMA: Identify all logical fields (keys and types) for this document.\n2. HTML: Create a clean, professional HTML structure using modern CSS (inline). Use {field_name} placeholders. Do NOT include <html>, <head>, or <body> tags. The output must be safe to embed directly into a React component (e.g. use a wrapper <div>).\n3. OUTPUT: You MUST return a JSON object with:\n   \"template_name\": \"Professional Name\",\n   \"description\": \"Brief description\",\n   \"template_schema\": {{\"field_1\": \"type\", \"field_2\": \"type\"}},\n   \"html_content\": \"<div>...</div>\",\n   \"document_type\": \"invoice|contract|report|other\"\n\nReturn ONLY the JSON.")
+    AI_TEMPLATE_OVERRIDE_PROMPT_FORMAT: str = os.getenv("AI_TEMPLATE_OVERRIDE_PROMPT_FORMAT", "{override_prompt}\n\nContext:\nIndustry: {industry}\nCategory: {category}\nSubcategory: {subcategory}\n\nReturn ONLY a JSON object with:\n\"template_name\": \"Professional Name\",\n\"description\": \"Brief description\",\n\"template_schema\": {{\"field_1\": \"type\", \"field_2\": \"type\"}},\n\"html_content\": \"<div>...</div>\",\n\"document_type\": \"invoice|contract|report|other\"\n\nNote: Do NOT include <html>, <head>, or <body> tags in html_content. Use a wrapper <div> instead.")
+    AI_TEMPLATE_STANDARD_PROMPT_FORMAT: str = os.getenv("AI_TEMPLATE_STANDARD_PROMPT_FORMAT", "Create a document template for:\nIndustry: {industry}\nCategory: {category}\nSubcategory: {subcategory}\n\n### REQUIREMENTS:\n1. SCHEMA: Identify all standard fields expected in such a document.\n2. HTML: Create a clean, professional HTML structure using modern CSS (inline). Use {field_name} placeholders. Do NOT include <html>, <head>, or <body> tags. The output must be safe to embed directly into a React component (e.g. use a wrapper <div>).\n3. OUTPUT: You MUST return a JSON object with:\n   \"template_name\": \"Professional Name\",\n   \"description\": \"Brief description\",\n   \"template_schema\": {{\"field_1\": \"type\", \"field_2\": \"type\"}},\n   \"html_content\": \"<div>...</div>\",\n   \"document_type\": \"invoice|contract|report|other\"\n\nReturn ONLY the JSON.")
+
+    # AI Classification Prompts
+    AI_CLASSIFICATION_SYSTEM_PROMPT: str = os.getenv("AI_CLASSIFICATION_SYSTEM_PROMPT", "You are an expert at document classification. Only return valid JSON.")
+    AI_CLASSIFICATION_PROMPT_FORMAT: str = os.getenv("AI_CLASSIFICATION_PROMPT_FORMAT", "You are a document classification assistant. Your task is to analyze the document text and map it to the MOST RELEVANT Industry, Category, and Subcategory from the provided list.\n\n### AVAILABLE CLASSIFICATIONS:\n{classification_list}\n\n### DOCUMENT TEXT (truncated):\n{text}\n\n### OUTPUT REQUIREMENTS:\nReturn ONLY a JSON object with the following fields:\n- industry_id: UUID string\n- industry_name: string\n- category_id: UUID string\n- category_name: string\n- subcategory_id: UUID string\n- subcategory_name: string\n- confidence: float (0.0 to 1.0)")
+
+    # AI Suggestions Prompts
+    AI_SUGGESTIONS_SYSTEM_PROMPT: str = os.getenv("AI_SUGGESTIONS_SYSTEM_PROMPT", "You are a proactive assistant. Only return a valid JSON array of strings.")
+    AI_SUGGESTIONS_PROMPT_FORMAT: str = os.getenv("AI_SUGGESTIONS_PROMPT_FORMAT", "Based on the following context, generate {max_suggestions} short, proactive follow-up questions or suggestions that a user might want to ask next.\n\n### CONTEXT:\n{context}\n\n### OUTPUT REQUIREMENTS:\nReturn ONLY a JSON array of strings.\nExample: [\"What is the total amount?\", \"When is the next payment due?\", \"List the key risks.\"]")
+
+    # AI Multimodal Prompts
+    AI_MULTIMODAL_SYSTEM_PROMPT: str = os.getenv("AI_MULTIMODAL_SYSTEM_PROMPT", "You are an expert multimodal analyst. Analyze the text and images provided to generate comprehensive insights.")
     
     # Email (SMTP)
     SMTP_HOST: str = os.getenv("SMTP_HOST")
@@ -67,11 +84,15 @@ class Settings(BaseModel):
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
     REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "")
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+    DOCUMENT_CACHE_RETENTION_HOURS: int = int(os.getenv("DOCUMENT_CACHE_RETENTION_HOURS", 48))
 
     # Google Integration
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_REDIRECT_URI: Optional[str] = os.getenv("GOOGLE_REDIRECT_URI")
+
+    # WebSocket Configuration
+    WEBSOCKET_URL: Optional[str] = os.getenv("WEBSOCKET_URL")
 
     # Local Storage
     UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")

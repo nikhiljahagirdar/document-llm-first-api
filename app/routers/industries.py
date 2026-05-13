@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas import IndustryResponse, IndustryCreate, IndustryUpdate, TemplateResponse
-from typing import List, Optional
+from typing import List, Optional, Any
 import uuid
-from fastapi_cache.decorator import cache
-import psycopg
 from app.db_raw import get_raw_db
 from app.services.db.industry_db_service import IndustryDBService
 
@@ -17,7 +15,7 @@ async def get_industry_service():
 @router.get("", response_model=List[IndustryResponse])
 async def get_all_industries(
     search: Optional[str] = None,
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: IndustryDBService = Depends(get_industry_service)
 ):
     """
@@ -28,7 +26,7 @@ async def get_all_industries(
 @router.post("", response_model=IndustryResponse, status_code=status.HTTP_201_CREATED)
 async def create_industry(
     industry: IndustryCreate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: IndustryDBService = Depends(get_industry_service)
 ):
     """
@@ -39,7 +37,7 @@ async def create_industry(
 @router.get("/{industry_id}", response_model=IndustryResponse)
 async def get_industry(
     industry_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: IndustryDBService = Depends(get_industry_service)
 ):
     """
@@ -54,7 +52,7 @@ async def get_industry(
 async def update_industry(
     industry_id: uuid.UUID, 
     industry_update: IndustryUpdate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: IndustryDBService = Depends(get_industry_service)
 ):
     """
@@ -71,7 +69,7 @@ async def update_industry(
 @router.delete("/{industry_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_industry(
     industry_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: IndustryDBService = Depends(get_industry_service)
 ):
     """
@@ -89,7 +87,7 @@ async def delete_industry(
 async def get_templates_by_industry(
     industry_id: uuid.UUID, 
     tenant_id: Optional[uuid.UUID] = None, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: IndustryDBService = Depends(get_industry_service)
 ):
     """

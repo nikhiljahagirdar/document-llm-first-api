@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import PlanResponse, PlanCreate, PlanUpdate
 from app.dependencies import get_superadmin
@@ -18,7 +17,7 @@ async def get_plan_service():
 
 @router.get("", response_model=List[PlanResponse])
 async def get_plans(
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: PlanDBService = Depends(get_plan_service)
 ):
     """
@@ -29,7 +28,7 @@ async def get_plans(
 @router.post("", response_model=PlanResponse, status_code=status.HTTP_201_CREATED)
 async def create_plan(
     plan: PlanCreate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: PlanDBService = Depends(get_plan_service),
     admin: Any = Depends(get_superadmin)
 ):
@@ -91,7 +90,7 @@ async def create_plan(
 async def update_plan(
     plan_id: uuid.UUID, 
     plan_update: PlanUpdate, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: PlanDBService = Depends(get_plan_service),
     admin: Any = Depends(get_superadmin)
 ):
@@ -108,7 +107,7 @@ async def update_plan(
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_plan(
     plan_id: uuid.UUID, 
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: PlanDBService = Depends(get_plan_service),
     admin: Any = Depends(get_superadmin)
 ):

@@ -43,7 +43,7 @@ class PlanResponse(PlanBase):
 class SubscriptionResponse(BaseModel):
     subscription_id: UUID
     status: str
-    current_period_end: datetime
+    current_period_end: Optional[datetime] = None
     plan: PlanResponse
 
     class Config:

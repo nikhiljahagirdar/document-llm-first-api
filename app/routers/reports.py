@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, status
-import psycopg
 from app.db_raw import get_raw_db
 from app.schemas import GeneratedReportResponse
 from app.dependencies import get_current_user, get_current_tenant
@@ -36,7 +35,7 @@ async def get_my_reports(
     limit: int = 20,
     offset: int = 0,
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: ReportDBService = Depends(get_report_service)
 ):
     """
@@ -49,7 +48,7 @@ async def analyze_document(
     document_id: uuid.UUID = Body(...),
     template_id: uuid.UUID = Body(...),
     prompt: str = Body("Extract all fields including tables."),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     current_user: Any = Depends(get_current_user),
     tenant: Any = Depends(get_current_tenant),
     service: ReportDBService = Depends(get_report_service),
@@ -130,7 +129,7 @@ async def analyze_document(
 async def get_report(
     report_id: uuid.UUID,
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: ReportDBService = Depends(get_report_service)
 ):
     """
@@ -145,7 +144,7 @@ async def get_report(
 async def get_report_versions(
     report_id: uuid.UUID,
     tenant: Any = Depends(get_current_tenant),
-    conn: psycopg.AsyncConnection = Depends(get_raw_db),
+    conn: Any = Depends(get_raw_db),
     service: ReportDBService = Depends(get_report_service)
 ):
     """

@@ -248,7 +248,10 @@ class APIValidationMiddleware(BaseHTTPMiddleware):
         
         # Required headers for sensitive operations
         self.required_headers = {
-            "/api/users/login": [],  # No special headers required
+            "/api/users/login": [],      # Public
+            "/api/users/register": [],   # Public
+            "/api/plans": [],            # Public
+            "/api/billing/checkout": [], # Public
             "/api/documents/upload": ["Content-Type"],
             "/api/llm/generate": ["Content-Type"],
         }
@@ -283,6 +286,9 @@ class APIValidationMiddleware(BaseHTTPMiddleware):
             return  # These methods don't typically have bodies
         
         content_type = request.headers.get("Content-Type", "")
+        if not content_type:
+            return  # Allow empty/missing Content-Type (standard for empty body POSTs)
+        
         allowed_types = self.allowed_content_types.get(method, [])
         
         if allowed_types and not any(allowed in content_type for allowed in allowed_types):
